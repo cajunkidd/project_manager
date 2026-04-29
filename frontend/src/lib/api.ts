@@ -26,6 +26,14 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }).then((r) => r.data),
   me: () => api.get('/auth/me').then((r) => r.data),
+  updateMe: (data: { emailNotifications?: boolean; emailDigest?: boolean; displayName?: string; department?: string }) =>
+    api.patch('/auth/me', data).then((r) => r.data),
+};
+
+export const emailApi = {
+  status: () => api.get('/email/status').then((r) => r.data),
+  sendMyDigest: () => api.post('/email/digest/me').then((r) => r.data),
+  sendDigestAll: () => api.post('/email/digest/all').then((r) => r.data),
 };
 
 export const usersApi = {

@@ -6,6 +6,13 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  private readonly userSelect = {
+    id: true, email: true, displayName: true, role: true,
+    department: true, isActive: true,
+    emailNotifications: true, emailDigest: true,
+    createdAt: true, updatedAt: true,
+  };
+
   async findAll(filters: { department?: string; role?: string; isActive?: boolean } = {}) {
     return this.prisma.user.findMany({
       where: {
@@ -13,10 +20,7 @@ export class UsersService {
         ...(filters.role && { role: filters.role }),
         ...(filters.isActive !== undefined && { isActive: filters.isActive }),
       },
-      select: {
-        id: true, email: true, displayName: true, role: true,
-        department: true, isActive: true, createdAt: true, updatedAt: true,
-      },
+      select: this.userSelect,
       orderBy: { displayName: 'asc' },
     });
   }
@@ -24,10 +28,7 @@ export class UsersService {
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true, email: true, displayName: true, role: true,
-        department: true, isActive: true, createdAt: true, updatedAt: true,
-      },
+      select: this.userSelect,
     });
     if (!user) throw new NotFoundException('User not found');
     return user;
@@ -43,23 +44,28 @@ export class UsersService {
     const hashed = await bcrypt.hash(data.password, 10);
     return this.prisma.user.create({
       data: { ...data, password: hashed },
-      select: {
-        id: true, email: true, displayName: true, role: true,
-        department: true, isActive: true, createdAt: true, updatedAt: true,
-      },
+      select: this.userSelect,
     });
   }
 
-  async update(id: string, data: Partial<{ displayName: string; role: string; department: string; isActive: boolean; password: string }>) {
+  async update(
+    id: string,
+    data: Partial<{
+      displayName: string;
+      role: string;
+      department: string;
+      isActive: boolean;
+      password: string;
+      emailNotifications: boolean;
+      emailDigest: boolean;
+    }>,
+  ) {
     await this.findById(id);
     if (data.password) data.password = await bcrypt.hash(data.password, 10);
     return this.prisma.user.update({
       where: { id },
       data,
-      select: {
-        id: true, email: true, displayName: true, role: true,
-        department: true, isActive: true, createdAt: true, updatedAt: true,
-      },
+      select: this.userSelect,
     });
   }
 

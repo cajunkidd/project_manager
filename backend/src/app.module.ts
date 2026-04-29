@@ -15,6 +15,7 @@ import { UploadsModule } from './uploads/uploads.module';
 import { AiModule } from './ai/ai.module';
 import { TimeEntriesModule } from './time-entries/time-entries.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
     AiModule,
     TimeEntriesModule,
     WebhooksModule,
+    EmailModule,
   ],
 })
 export class AppModule {}
