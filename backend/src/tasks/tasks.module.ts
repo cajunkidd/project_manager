@@ -4,9 +4,10 @@ import { TasksController } from './tasks.controller';
 import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AutomationsModule } from '../automations/automations.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
-  imports: [ActivityLogsModule, NotificationsModule, AutomationsModule],
+  imports: [ActivityLogsModule, NotificationsModule, AutomationsModule, WebhooksModule],
   providers: [TasksService],
   controllers: [TasksController],
   exports: [TasksService],

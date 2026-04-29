@@ -140,6 +140,17 @@ export const dependenciesApi = {
     api.delete(`/tasks/${taskId}/dependencies/${depId}`).then((r) => r.data),
 };
 
+export const webhooksApi = {
+  list: () => api.get('/webhooks').then((r) => r.data),
+  create: (data: { name: string; url: string; events: string[] }) =>
+    api.post('/webhooks', data).then((r) => r.data),
+  update: (id: string, data: any) => api.patch(`/webhooks/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/webhooks/${id}`).then((r) => r.data),
+  deliveries: (id: string) => api.get(`/webhooks/${id}/deliveries`).then((r) => r.data),
+  redeliver: (deliveryId: string) =>
+    api.post(`/webhooks/deliveries/${deliveryId}/redeliver`).then((r) => r.data),
+};
+
 export const attachmentsApi = {
   listForTask: (taskId: string) =>
     api.get(`/tasks/${taskId}/attachments`).then((r) => r.data),

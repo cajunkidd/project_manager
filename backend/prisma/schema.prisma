@@ -31,6 +31,7 @@ model User {
   createdAutomations AutomationRule[]
   uploadedAttachments Attachment[]
   timeEntries  TimeEntry[]
+  createdWebhooks WebhookSubscription[]
 
   @@map("users")
 }
@@ -254,4 +255,39 @@ model TimeEntry {
   user User @relation(fields: [userId], references: [id])
 
   @@map("time_entries")
+}
+
+model WebhookSubscription {
+  id          String   @id @default(uuid())
+  name        String
+  url         String
+  events      String[]
+  secret      String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdBy  User?              @relation(fields: [createdById], references: [id])
+  deliveries WebhookDelivery[]
+
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDelivery {
+  id             String   @id @default(uuid())
+  subscriptionId String   @map("subscription_id")
+  event          String
+  payload        Json
+  status         String
+  statusCode     Int?     @map("status_code")
+  response       String?
+  attempts       Int      @default(1)
+  error          String?
+  deliveredAt    DateTime @default(now()) @map("delivered_at")
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, deliveredAt])
+  @@map("webhook_deliveries")
 }

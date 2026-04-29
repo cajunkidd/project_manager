@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import WebhooksManager from '@/components/WebhooksManager';
 import { formatDate } from '@/lib/utils';
 import type { User } from '@/types';
 
@@ -175,11 +176,12 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Settings — Users</h1>
+        <h1 className="text-2xl font-bold">Settings</h1>
         <Button onClick={() => { setEditUser(undefined); setShowForm(true); }}>
           <Plus className="mr-2 h-4 w-4" /> New User
         </Button>
       </div>
+      <h2 className="text-lg font-semibold">Users</h2>
 
       {loading ? (
         <p className="text-muted-foreground">Loading…</p>
@@ -256,6 +258,9 @@ export default function Settings() {
         onSaved={load}
         user={editUser}
       />
+
+      <h2 className="text-lg font-semibold pt-4">Integrations</h2>
+      <WebhooksManager />
     </div>
   );
 }

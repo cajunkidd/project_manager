@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AutomationEngine } from '../automations/automation-engine.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 const TASK_SELECT = {
   id: true, title: true, description: true, status: true, priority: true,
@@ -23,6 +24,7 @@ export class TasksService {
     private activityLogs: ActivityLogsService,
     private notifications: NotificationsService,
     private automationEngine: AutomationEngine,
+    private webhooks: WebhooksService,
   ) {}
 
   async findAll(filters: {
@@ -97,6 +99,7 @@ export class TasksService {
     if (task.assignee) {
       await this.automationEngine.trigger('task.assigned', { task, triggeredBy: userId });
     }
+    this.webhooks.dispatch('task.created', { task, triggeredBy: userId }).catch(() => {});
     return task;
   }
 
@@ -177,6 +180,13 @@ export class TasksService {
         task: updated, oldTask: old, triggeredBy: userId,
       });
     }
+
+    if (data.status && data.status !== old.status) {
+      this.webhooks.dispatch('task.status_changed', {
+        task: updated, oldStatus: old.status, triggeredBy: userId,
+      }).catch(() => {});
+    }
+    this.webhooks.dispatch('task.updated', { task: updated, triggeredBy: userId }).catch(() => {});
 
     return updated;
   }

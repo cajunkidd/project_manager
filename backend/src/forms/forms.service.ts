@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 @Injectable()
 export class FormsService {
@@ -9,6 +10,7 @@ export class FormsService {
     private prisma: PrismaService,
     private notifications: NotificationsService,
     private activityLogs: ActivityLogsService,
+    private webhooks: WebhooksService,
   ) {}
 
   async findAll(activeOnly = false) {
@@ -131,6 +133,10 @@ export class FormsService {
     }
 
     await this.activityLogs.log('task', task.id, 'created_from_form', null, { formId, formName: form.name }, userId);
+
+    this.webhooks.dispatch('form.submitted', {
+      submission, form: { id: form.id, name: form.name }, task: { id: task.id, title: task.title }, triggeredBy: userId,
+    }).catch(() => {});
 
     return submission;
   }

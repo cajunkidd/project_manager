@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+import { WebhooksService } from '../webhooks/webhooks.service';
 
 const PROJECT_SELECT = {
   id: true, name: true, description: true, status: true, priority: true,
@@ -16,6 +17,7 @@ export class ProjectsService {
   constructor(
     private prisma: PrismaService,
     private activityLogs: ActivityLogsService,
+    private webhooks: WebhooksService,
   ) {}
 
   async findAll(filters: { status?: string; ownerId?: string; department?: string; priority?: string; search?: string }) {
@@ -63,6 +65,7 @@ export class ProjectsService {
       select: PROJECT_SELECT,
     });
     await this.activityLogs.log('project', project.id, 'created', null, { name: project.name }, userId);
+    this.webhooks.dispatch('project.created', { project, triggeredBy: userId }).catch(() => {});
     return project;
   }
 
@@ -77,6 +80,7 @@ export class ProjectsService {
       select: PROJECT_SELECT,
     });
     await this.activityLogs.log('project', id, 'updated', old, data, userId);
+    this.webhooks.dispatch('project.updated', { project: updated, triggeredBy: userId }).catch(() => {});
     return updated;
   }
 

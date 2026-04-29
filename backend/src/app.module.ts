@@ -14,6 +14,7 @@ import { AutomationsModule } from './automations/automations.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AiModule } from './ai/ai.module';
 import { TimeEntriesModule } from './time-entries/time-entries.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { TimeEntriesModule } from './time-entries/time-entries.module';
     UploadsModule,
     AiModule,
     TimeEntriesModule,
+    WebhooksModule,
   ],
 })
 export class AppModule {}
