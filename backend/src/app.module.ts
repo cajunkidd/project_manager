@@ -8,6 +8,8 @@ import { CommentsModule } from './comments/comments.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ReportsModule } from './reports/reports.module';
+import { FormsModule } from './forms/forms.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ActivityLogsModule,
     NotificationsModule,
     DashboardModule,
+    ReportsModule,
+    FormsModule,
   ],
 })
 export class AppModule {}

@@ -57,18 +57,21 @@ export class TasksService {
           },
           orderBy: { createdAt: 'asc' },
         },
-        activityLogs: {
-          select: {
-            id: true, action: true, oldValue: true, newValue: true, createdAt: true,
-            user: { select: { id: true, displayName: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 50,
-        },
       },
     });
     if (!task) throw new NotFoundException('Task not found');
-    return task;
+
+    const activityLogs = await this.prisma.activityLog.findMany({
+      where: { entityType: 'task', entityId: id },
+      select: {
+        id: true, action: true, oldValue: true, newValue: true, createdAt: true,
+        user: { select: { id: true, displayName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    return { ...task, activityLogs };
   }
 
   async create(data: any, userId: string) {

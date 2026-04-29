@@ -78,3 +78,31 @@ export const dashboardApi = {
   me: () => api.get('/dashboard/me').then((r) => r.data),
   manager: () => api.get('/dashboard/manager').then((r) => r.data),
 };
+
+export const reportsApi = {
+  tasksByUser: (params?: Record<string, string>) =>
+    api.get('/reports/tasks-by-user', { params }).then((r) => r.data),
+  overdue: (params?: Record<string, string>) =>
+    api.get('/reports/overdue', { params }).then((r) => r.data),
+  projectsByStatus: (params?: Record<string, string>) =>
+    api.get('/reports/projects-by-status', { params }).then((r) => r.data),
+  completionTrend: (weeks?: number) =>
+    api.get('/reports/completion-trend', { params: weeks ? { weeks: String(weeks) } : {} }).then((r) => r.data),
+  blocked: (params?: Record<string, string>) =>
+    api.get('/reports/blocked', { params }).then((r) => r.data),
+  avgCompletion: (params?: Record<string, string>) =>
+    api.get('/reports/avg-completion', { params }).then((r) => r.data),
+  workload: (params?: Record<string, string>) =>
+    api.get('/reports/workload', { params }).then((r) => r.data),
+};
+
+export const formsApi = {
+  list: (active?: boolean) =>
+    api.get('/forms', { params: active ? { active: 'true' } : {} }).then((r) => r.data),
+  get: (id: string) => api.get(`/forms/${id}`).then((r) => r.data),
+  create: (data: any) => api.post('/forms', data).then((r) => r.data),
+  update: (id: string, data: any) => api.patch(`/forms/${id}`, data).then((r) => r.data),
+  submit: (id: string, data: any) => api.post(`/forms/${id}/submit`, data).then((r) => r.data),
+  submissions: (params?: Record<string, string>) =>
+    api.get('/forms/submissions', { params }).then((r) => r.data),
+};

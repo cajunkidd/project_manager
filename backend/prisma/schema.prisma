@@ -53,10 +53,8 @@ model Project {
   createdBy  User?    @relation("ProjectCreator", fields: [createdById], references: [id])
   tasks      Task[]
   comments   Comment[]
-  activityLogs ActivityLog[]
   forms      Form[]
   attachments Attachment[]
-  formSubmissions FormSubmission[] @relation("SubmissionProject")
 
   @@map("projects")
 }
@@ -84,7 +82,6 @@ model Task {
   assignee     User?     @relation("TaskAssignee", fields: [assignedTo], references: [id])
   createdBy    User?     @relation("TaskCreator", fields: [createdById], references: [id])
   comments     Comment[]
-  activityLogs ActivityLog[]
   attachments  Attachment[]
   dependsOn    TaskDependency[] @relation("DependentTask")
   dependedOnBy TaskDependency[] @relation("DependsOnTask")
@@ -120,8 +117,6 @@ model ActivityLog {
   createdAt  DateTime @default(now()) @map("created_at")
 
   user    User?    @relation(fields: [userId], references: [id])
-  task    Task?    @relation(fields: [entityId], references: [id], map: "activity_task_fk")
-  project Project? @relation(fields: [entityId], references: [id], map: "activity_project_fk")
 
   @@map("activity_logs")
 }
@@ -189,7 +184,6 @@ model FormSubmission {
   form          Form     @relation(fields: [formId], references: [id])
   submittedBy   User?    @relation(fields: [submittedById], references: [id])
   createdTask   Task?    @relation("SubmissionTask", fields: [createdTaskId], references: [id])
-  project       Project? @relation("SubmissionProject", fields: [formId], references: [id], map: "submission_project_fk")
 
   @@map("form_submissions")
 }

@@ -8,6 +8,9 @@ import Projects from '@/pages/Projects';
 import ProjectDetail from '@/pages/ProjectDetail';
 import Board from '@/pages/Board';
 import TaskDetail from '@/pages/TaskDetail';
+import Reports from '@/pages/Reports';
+import Workload from '@/pages/Workload';
+import Forms from '@/pages/Forms';
 import Placeholder from '@/pages/Placeholder';
 
 export default function App() {
@@ -25,9 +28,9 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="tasks/:id" element={<TaskDetail />} />
           <Route path="board" element={<Board />} />
-          <Route path="forms" element={<Placeholder title="Intake Forms" />} />
-          <Route path="reports" element={<Placeholder title="Reports" />} />
-          <Route path="workload" element={<Placeholder title="Workload Management" />} />
+          <Route path="forms" element={<Forms />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="workload" element={<Workload />} />
           <Route path="automations" element={<Placeholder title="Automations" />} />
           <Route path="settings" element={<Placeholder title="Settings" />} />
         </Route>
