@@ -1,0 +1,80 @@
+import axios from 'axios';
+
+const api = axios.create({ baseURL: '/api' });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  },
+);
+
+export default api;
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post('/auth/login', { email, password }).then((r) => r.data),
+  me: () => api.get('/auth/me').then((r) => r.data),
+};
+
+export const usersApi = {
+  list: (params?: Record<string, string>) => api.get('/users', { params }).then((r) => r.data),
+  get: (id: string) => api.get(`/users/${id}`).then((r) => r.data),
+  create: (data: any) => api.post('/users', data).then((r) => r.data),
+  update: (id: string, data: any) => api.patch(`/users/${id}`, data).then((r) => r.data),
+  deactivate: (id: string) => api.delete(`/users/${id}`).then((r) => r.data),
+};
+
+export const projectsApi = {
+  list: (params?: Record<string, string>) => api.get('/projects', { params }).then((r) => r.data),
+  get: (id: string) => api.get(`/projects/${id}`).then((r) => r.data),
+  create: (data: any) => api.post('/projects', data).then((r) => r.data),
+  update: (id: string, data: any) => api.patch(`/projects/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/projects/${id}`).then((r) => r.data),
+  activity: (id: string) => api.get(`/projects/${id}/activity`).then((r) => r.data),
+};
+
+export const tasksApi = {
+  list: (params?: Record<string, string>) => api.get('/tasks', { params }).then((r) => r.data),
+  get: (id: string) => api.get(`/tasks/${id}`).then((r) => r.data),
+  create: (data: any) => api.post('/tasks', data).then((r) => r.data),
+  update: (id: string, data: any) => api.patch(`/tasks/${id}`, data).then((r) => r.data),
+  updateStatus: (id: string, status: string) =>
+    api.patch(`/tasks/${id}/status`, { status }).then((r) => r.data),
+  reorder: (tasks: { id: string; sortOrder: number }[]) =>
+    api.patch('/tasks/reorder', { tasks }).then((r) => r.data),
+  remove: (id: string) => api.delete(`/tasks/${id}`).then((r) => r.data),
+};
+
+export const commentsApi = {
+  listForTask: (taskId: string) => api.get(`/tasks/${taskId}/comments`).then((r) => r.data),
+  addToTask: (taskId: string, body: string) =>
+    api.post(`/tasks/${taskId}/comments`, { body }).then((r) => r.data),
+  addToProject: (projectId: string, body: string) =>
+    api.post(`/projects/${projectId}/comments`, { body }).then((r) => r.data),
+  update: (id: string, body: string) => api.patch(`/comments/${id}`, { body }).then((r) => r.data),
+  remove: (id: string) => api.delete(`/comments/${id}`).then((r) => r.data),
+};
+
+export const notificationsApi = {
+  list: () => api.get('/notifications').then((r) => r.data),
+  unreadCount: () => api.get('/notifications/unread-count').then((r) => r.data),
+  markRead: (id: string) => api.patch(`/notifications/${id}/read`).then((r) => r.data),
+  markAllRead: () => api.patch('/notifications/read-all').then((r) => r.data),
+};
+
+export const dashboardApi = {
+  me: () => api.get('/dashboard/me').then((r) => r.data),
+  manager: () => api.get('/dashboard/manager').then((r) => r.data),
+};
