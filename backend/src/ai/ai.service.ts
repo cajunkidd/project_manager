@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -37,6 +37,11 @@ Analyze the provided project data and write a concise health summary.
 Format: 3-5 bullet points covering overall health, progress highlights,
 blockers or risks, and recommended next actions.
 Use plain text bullets starting with "•". Be specific about numbers and names.`;
+
+const RISK_SYSTEM = `You are a project risk analyst for an IT department.
+Given a project's risk factors, write a concise 2-3 sentence plain-language
+explanation of why the project is at risk and what should be done first.
+Be specific about numbers. Do not repeat the score back. No bullets, no markdown.`;
 
 @Injectable()
 export class AiService {
@@ -203,6 +208,145 @@ urgent=outage/security/data loss, high=major disruption, normal=standard work, l
     } catch {
       return { priority: 'normal', reason: 'Could not determine priority.' };
     }
+  }
+
+  private scoreProject(project: {
+    name: string;
+    dueDate: Date | null;
+    tasks: { status: string; dueDate: Date | null; assignedTo: string | null; updatedAt: Date; title: string }[];
+  }) {
+    const now = new Date();
+    const activeTasks = project.tasks.filter((t) => !['done', 'cancelled'].includes(t.status));
+    const overdue = activeTasks.filter((t) => t.dueDate && new Date(t.dueDate) < now);
+    const blocked = activeTasks.filter((t) => t.status === 'waiting');
+    const unassigned = activeTasks.filter((t) => !t.assignedTo);
+
+    const lastActivity = project.tasks.reduce<Date | null>((latest, t) => {
+      const u = new Date(t.updatedAt);
+      return !latest || u > latest ? u : latest;
+    }, null);
+    const daysSinceActivity = lastActivity
+      ? Math.floor((now.getTime() - lastActivity.getTime()) / 86_400_000)
+      : 999;
+
+    const dueDateProximity = project.dueDate
+      ? Math.floor((new Date(project.dueDate).getTime() - now.getTime()) / 86_400_000)
+      : null;
+
+    let score = 0;
+    const factors: { label: string; value: number; weight: number }[] = [];
+
+    if (activeTasks.length > 0 && overdue.length > 0) {
+      const overduePct = (overdue.length / activeTasks.length) * 100;
+      const w = Math.min(40, Math.round(overduePct * 0.5));
+      if (w > 0) factors.push({ label: `${overdue.length} overdue task(s)`, value: overdue.length, weight: w });
+      score += w;
+    }
+
+    if (blocked.length > 0) {
+      const w = Math.min(20, blocked.length * 5);
+      factors.push({ label: `${blocked.length} blocked task(s)`, value: blocked.length, weight: w });
+      score += w;
+    }
+
+    if (unassigned.length > 0 && activeTasks.length > 0) {
+      const unassignedPct = (unassigned.length / activeTasks.length) * 100;
+      const w = Math.min(15, Math.round(unassignedPct * 0.3));
+      if (w > 0) factors.push({ label: `${unassigned.length} unassigned task(s)`, value: unassigned.length, weight: w });
+      score += w;
+    }
+
+    if (daysSinceActivity > 7 && activeTasks.length > 0) {
+      const w = Math.min(15, daysSinceActivity);
+      factors.push({ label: `${daysSinceActivity} days since last activity`, value: daysSinceActivity, weight: w });
+      score += w;
+    }
+
+    if (dueDateProximity !== null && dueDateProximity < 14 && activeTasks.length > 0) {
+      const w = dueDateProximity < 0 ? 25 : dueDateProximity < 7 ? 15 : 8;
+      const label = dueDateProximity < 0
+        ? `Project ${Math.abs(dueDateProximity)} days past due`
+        : `Project due in ${dueDateProximity} days, ${activeTasks.length} tasks remain`;
+      factors.push({ label, value: dueDateProximity, weight: w });
+      score += w;
+    }
+
+    score = Math.min(100, score);
+    const level: 'low' | 'medium' | 'high' | 'critical' =
+      score >= 75 ? 'critical' : score >= 50 ? 'high' : score >= 25 ? 'medium' : 'low';
+
+    return { score, level, factors, activeTasks, overdue, blocked, unassigned, daysSinceActivity, dueDateProximity };
+  }
+
+  async analyzeProjectRisk(projectId: string): Promise<{
+    score: number;
+    level: 'low' | 'medium' | 'high' | 'critical';
+    factors: { label: string; value: number; weight: number }[];
+    explanation: string | null;
+  }> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        owner: { select: { displayName: true } },
+        tasks: {
+          select: {
+            title: true, status: true, dueDate: true, assignedTo: true, updatedAt: true,
+          },
+        },
+      },
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const r = this.scoreProject(project);
+
+    let explanation: string | null = null;
+    if (this.client && r.score >= 25) {
+      const context = `Project: ${project.name}
+Owner: ${project.owner?.displayName ?? 'Unassigned'}
+Active tasks: ${r.activeTasks.length} (${r.overdue.length} overdue, ${r.blocked.length} blocked, ${r.unassigned.length} unassigned)
+Days since last activity: ${r.daysSinceActivity}
+${r.dueDateProximity !== null ? `Project due in ${r.dueDateProximity} days` : 'No project due date'}
+Risk score: ${r.score}/100 (${r.level})
+Top overdue tasks: ${r.overdue.slice(0, 5).map((t) => t.title).join(', ') || 'none'}`;
+
+      try {
+        const response = await this.client.messages.create({
+          model: MODEL,
+          max_tokens: 256,
+          system: [
+            { type: 'text', text: RISK_SYSTEM, cache_control: { type: 'ephemeral' } },
+          ],
+          messages: [{ role: 'user', content: context }],
+        });
+        explanation = response.content[0].type === 'text' ? response.content[0].text.trim() : null;
+      } catch {
+        explanation = null;
+      }
+    }
+
+    return { score: r.score, level: r.level, factors: r.factors, explanation };
+  }
+
+  async listProjectRisks(): Promise<
+    { projectId: string; name: string; score: number; level: string; topFactor: string | null }[]
+  > {
+    const projects = await this.prisma.project.findMany({
+      where: { status: { notIn: ['done', 'cancelled', 'on_hold'] } },
+      select: {
+        id: true, name: true, dueDate: true,
+        tasks: {
+          select: { title: true, status: true, dueDate: true, assignedTo: true, updatedAt: true },
+        },
+      },
+    });
+
+    return projects
+      .map((p) => {
+        const r = this.scoreProject(p);
+        const topFactor = [...r.factors].sort((a, b) => b.weight - a.weight)[0]?.label ?? null;
+        return { projectId: p.id, name: p.name, score: r.score, level: r.level, topFactor };
+      })
+      .sort((a, b) => b.score - a.score);
   }
 
   isAvailable(): boolean {

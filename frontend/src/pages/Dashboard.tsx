@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Clock, CheckCircle2, TrendingUp } from 'lucide-react';
-import { dashboardApi } from '@/lib/api';
+import { AlertCircle, Clock, CheckCircle2, TrendingUp, AlertTriangle } from 'lucide-react';
+import { dashboardApi, aiApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge';
+import RiskBadge from '@/components/RiskBadge';
 import { formatDate, isOverdue } from '@/lib/utils';
 import type { Task } from '@/types';
+
+interface ProjectRisk {
+  projectId: string;
+  name: string;
+  score: number;
+  level: string;
+  topFactor: string | null;
+}
 
 interface DashboardData {
   openTasks: Task[];
@@ -60,17 +69,20 @@ export default function Dashboard() {
   const { user, isManager } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [managerData, setManagerData] = useState<any | null>(null);
+  const [risks, setRisks] = useState<ProjectRisk[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [myData, mgData] = await Promise.all([
+        const [myData, mgData, riskData] = await Promise.all([
           dashboardApi.me(),
           isManager ? dashboardApi.manager() : null,
+          isManager ? aiApi.listRisks().catch(() => []) : Promise.resolve([]),
         ]);
         setData(myData);
         if (mgData) setManagerData(mgData);
+        setRisks(riskData ?? []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -79,6 +91,8 @@ export default function Dashboard() {
     };
     load();
   }, [isManager]);
+
+  const atRiskProjects = risks.filter((r) => r.score >= 25);
 
   if (loading) return <div className="text-muted-foreground">Loading dashboard…</div>;
 
@@ -149,6 +163,31 @@ export default function Dashboard() {
                   <div key={g.status} className="flex items-center justify-between text-sm">
                     <StatusBadge status={g.status} />
                     <span className="font-medium">{g._count.status}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isManager && atRiskProjects.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base text-orange-600">
+                <AlertTriangle className="h-4 w-4" /> Projects at Risk ({atRiskProjects.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="divide-y">
+                {atRiskProjects.slice(0, 8).map((r) => (
+                  <div key={r.projectId} className="flex items-center gap-3 py-2.5">
+                    <Link to={`/projects/${r.projectId}`} className="text-sm font-medium hover:underline flex-1 min-w-0 truncate">
+                      {r.name}
+                    </Link>
+                    {r.topFactor && (
+                      <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:inline">{r.topFactor}</span>
+                    )}
+                    <RiskBadge level={r.level} score={r.score} />
                   </div>
                 ))}
               </div>

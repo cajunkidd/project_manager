@@ -116,6 +116,8 @@ export const aiApi = {
     api.post(`/ai/project-summary/${id}`).then((r) => r.data.summary),
   suggestPriority: (title: string, description: string) =>
     api.post('/ai/suggest-priority', { title, description }).then((r) => r.data),
+  projectRisk: (id: string) => api.get(`/ai/project-risk/${id}`).then((r) => r.data),
+  listRisks: () => api.get('/ai/risks').then((r) => r.data),
 };
 
 export const timeEntriesApi = {

@@ -31,4 +31,14 @@ export class AiController {
   suggestPriority(@Body() body: { title: string; description: string }) {
     return this.aiService.suggestPriority(body.title, body.description);
   }
+
+  @Get('project-risk/:id')
+  projectRisk(@Param('id') id: string) {
+    return this.aiService.analyzeProjectRisk(id);
+  }
+
+  @Get('risks')
+  listRisks() {
+    return this.aiService.listProjectRisks();
+  }
 }

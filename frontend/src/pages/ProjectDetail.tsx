@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AiTaskCreate from '@/components/AiTaskCreate';
+import RiskBadge from '@/components/RiskBadge';
 import { formatDate, isOverdue, TASK_STATUSES, PRIORITIES } from '@/lib/utils';
 import type { Project, Task, User } from '@/types';
 
@@ -129,13 +130,19 @@ export default function ProjectDetail() {
   const [showAiCreate, setShowAiCreate] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [summarizing, setSummarizing] = useState(false);
+  const [risk, setRisk] = useState<{ score: number; level: string; factors: { label: string; weight: number }[]; explanation: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     try {
-      const [p, u] = await Promise.all([projectsApi.get(id!), usersApi.list()]);
+      const [p, u, r] = await Promise.all([
+        projectsApi.get(id!),
+        usersApi.list(),
+        aiApi.projectRisk(id!).catch(() => null),
+      ]);
       setProject(p);
       setUsers(u);
+      setRisk(r);
     } catch (err) {
       console.error(err);
     } finally {
@@ -177,9 +184,10 @@ export default function ProjectDetail() {
           <h1 className="text-2xl font-bold">{project.name}</h1>
           {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <StatusBadge status={project.status} />
           <PriorityBadge priority={project.priority} />
+          {risk && <RiskBadge level={risk.level} score={risk.score} />}
           <Button size="sm" variant="outline" onClick={handleAiSummary} disabled={summarizing}>
             {summarizing
               ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Summarizing…</>
@@ -194,6 +202,39 @@ export default function ProjectDetail() {
             <div className="flex items-start gap-2">
               <Sparkles className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
               <p className="text-sm whitespace-pre-wrap">{aiSummary}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {risk && risk.factors.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              Risk Analysis
+              <RiskBadge level={risk.level} score={risk.score} />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {risk.explanation && (
+              <p className="text-sm text-muted-foreground italic">
+                <Sparkles className="h-3 w-3 inline text-purple-500 mr-1" />
+                {risk.explanation}
+              </p>
+            )}
+            <div className="space-y-1.5">
+              {risk.factors.sort((a, b) => b.weight - a.weight).map((f, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm">
+                  <span className="flex-1">{f.label}</span>
+                  <div className="w-24 bg-muted rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full bg-orange-500"
+                      style={{ width: `${Math.min(100, (f.weight / 40) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground w-8 text-right">+{f.weight}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
