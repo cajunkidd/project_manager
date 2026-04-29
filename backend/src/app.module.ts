@@ -10,6 +10,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
 import { FormsModule } from './forms/forms.module';
+import { AutomationsModule } from './automations/automations.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { FormsModule } from './forms/forms.module';
     DashboardModule,
     ReportsModule,
     FormsModule,
+    AutomationsModule,
   ],
 })
 export class AppModule {}

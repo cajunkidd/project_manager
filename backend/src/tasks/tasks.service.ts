@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AutomationEngine } from '../automations/automation-engine.service';
 
 const TASK_SELECT = {
   id: true, title: true, description: true, status: true, priority: true,
@@ -20,6 +21,7 @@ export class TasksService {
     private prisma: PrismaService,
     private activityLogs: ActivityLogsService,
     private notifications: NotificationsService,
+    private automationEngine: AutomationEngine,
   ) {}
 
   async findAll(filters: {
@@ -90,6 +92,10 @@ export class TasksService {
         entityId: task.id,
       });
     }
+    await this.automationEngine.trigger('task.created', { task, triggeredBy: userId });
+    if (task.assignee) {
+      await this.automationEngine.trigger('task.assigned', { task, triggeredBy: userId });
+    }
     return task;
   }
 
@@ -119,6 +125,22 @@ export class TasksService {
         type: 'task_assigned',
         entityType: 'task',
         entityId: id,
+      });
+    }
+
+    if (data.status && data.status !== old.status) {
+      await this.automationEngine.trigger('task.status_changed', {
+        task: updated, oldTask: old, triggeredBy: userId,
+      });
+    }
+    if (data.assignedTo && data.assignedTo !== old.assignee?.id) {
+      await this.automationEngine.trigger('task.assigned', {
+        task: updated, oldTask: old, triggeredBy: userId,
+      });
+    }
+    if (data.priority && data.priority !== old.priority) {
+      await this.automationEngine.trigger('task.priority_changed', {
+        task: updated, oldTask: old, triggeredBy: userId,
       });
     }
 

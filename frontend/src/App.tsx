@@ -11,7 +11,8 @@ import TaskDetail from '@/pages/TaskDetail';
 import Reports from '@/pages/Reports';
 import Workload from '@/pages/Workload';
 import Forms from '@/pages/Forms';
-import Placeholder from '@/pages/Placeholder';
+import Automations from '@/pages/Automations';
+import Settings from '@/pages/Settings';
 
 export default function App() {
   const auth = useAuthState();
@@ -31,8 +32,8 @@ export default function App() {
           <Route path="forms" element={<Forms />} />
           <Route path="reports" element={<Reports />} />
           <Route path="workload" element={<Workload />} />
-          <Route path="automations" element={<Placeholder title="Automations" />} />
-          <Route path="settings" element={<Placeholder title="Settings" />} />
+          <Route path="automations" element={<Automations />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
