@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, CheckSquare, FolderKanban, Kanban,
+  LayoutDashboard, CheckSquare, FolderKanban, Kanban, GanttChartSquare,
   ClipboardList, BarChart3, Users2, Zap, Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/my-tasks', icon: CheckSquare, label: 'My Tasks' },
   { to: '/projects', icon: FolderKanban, label: 'Projects' },
   { to: '/board', icon: Kanban, label: 'Board' },
+  { to: '/timeline', icon: GanttChartSquare, label: 'Timeline' },
   { to: '/forms', icon: ClipboardList, label: 'Intake Forms' },
   { to: '/reports', icon: BarChart3, label: 'Reports' },
   { to: '/workload', icon: Users2, label: 'Workload' },

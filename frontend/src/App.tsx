@@ -13,6 +13,7 @@ import Workload from '@/pages/Workload';
 import Forms from '@/pages/Forms';
 import Automations from '@/pages/Automations';
 import Settings from '@/pages/Settings';
+import Gantt from '@/pages/Gantt';
 
 export default function App() {
   const auth = useAuthState();
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectDetail />} />
           <Route path="tasks/:id" element={<TaskDetail />} />
           <Route path="board" element={<Board />} />
+          <Route path="timeline" element={<Gantt />} />
           <Route path="forms" element={<Forms />} />
           <Route path="reports" element={<Reports />} />
           <Route path="workload" element={<Workload />} />

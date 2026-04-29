@@ -7,6 +7,7 @@ import { AutomationEngine } from '../automations/automation-engine.service';
 const TASK_SELECT = {
   id: true, title: true, description: true, status: true, priority: true,
   startDate: true, dueDate: true, completedAt: true, sortOrder: true,
+  isRecurring: true, recurrencePattern: true, recurrenceInterval: true,
   createdAt: true, updatedAt: true,
   project: { select: { id: true, name: true } },
   assignee: { select: { id: true, displayName: true, email: true } },
@@ -99,6 +100,18 @@ export class TasksService {
     return task;
   }
 
+  private computeNextDueDate(dueDate: Date, pattern: string, interval: number): Date {
+    const next = new Date(dueDate);
+    const n = interval || 1;
+    switch (pattern) {
+      case 'daily':   next.setDate(next.getDate() + n);     break;
+      case 'weekly':  next.setDate(next.getDate() + n * 7); break;
+      case 'monthly': next.setMonth(next.getMonth() + n);   break;
+      case 'yearly':  next.setFullYear(next.getFullYear() + n); break;
+    }
+    return next;
+  }
+
   async update(id: string, data: any, userId: string) {
     const old = await this.findById(id);
     const updateData: any = { ...data };
@@ -110,6 +123,27 @@ export class TasksService {
       data: updateData,
       select: TASK_SELECT,
     });
+
+    if (data.status === 'done' && old.status !== 'done' && (old as any).isRecurring && (old as any).recurrencePattern) {
+      const oldDue = (old as any).dueDate ? new Date((old as any).dueDate) : new Date();
+      const nextDue = this.computeNextDueDate(oldDue, (old as any).recurrencePattern, (old as any).recurrenceInterval ?? 1);
+      await this.prisma.task.create({
+        data: {
+          title: (old as any).title,
+          description: (old as any).description,
+          projectId: (old as any).project?.id ?? null,
+          assignedTo: (old as any).assignee?.id ?? null,
+          priority: (old as any).priority,
+          status: 'to_do',
+          dueDate: nextDue,
+          isRecurring: true,
+          recurrencePattern: (old as any).recurrencePattern,
+          recurrenceInterval: (old as any).recurrenceInterval ?? 1,
+          recurrenceParentId: id,
+          createdById: userId,
+        },
+      });
+    }
 
     if (data.status && data.status !== old.status) {
       await this.activityLogs.log('task', id, 'status_changed', { status: old.status }, { status: data.status }, userId);

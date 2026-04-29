@@ -107,6 +107,28 @@ export const formsApi = {
     api.get('/forms/submissions', { params }).then((r) => r.data),
 };
 
+export const attachmentsApi = {
+  listForTask: (taskId: string) =>
+    api.get(`/tasks/${taskId}/attachments`).then((r) => r.data),
+  listForProject: (projectId: string) =>
+    api.get(`/projects/${projectId}/attachments`).then((r) => r.data),
+  uploadToTask: (taskId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post(`/tasks/${taskId}/attachments`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data);
+  },
+  uploadToProject: (projectId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post(`/projects/${projectId}/attachments`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data);
+  },
+  delete: (id: string) => api.delete(`/attachments/${id}`).then((r) => r.data),
+};
+
 export const automationsApi = {
   list: () => api.get('/automations').then((r) => r.data),
   get: (id: string) => api.get(`/automations/${id}`).then((r) => r.data),

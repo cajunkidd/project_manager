@@ -11,6 +11,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
 import { FormsModule } from './forms/forms.module';
 import { AutomationsModule } from './automations/automations.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AutomationsModule } from './automations/automations.module';
     ReportsModule,
     FormsModule,
     AutomationsModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

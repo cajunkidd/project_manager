@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge';
+import FileAttachments from '@/components/FileAttachments';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate, TASK_STATUSES, PRIORITIES } from '@/lib/utils';
 import type { Task, User } from '@/types';
 
@@ -136,6 +138,7 @@ function SubtaskForm({
 export default function TaskDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [task, setTask] = useState<Task | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [comment, setComment] = useState('');
@@ -304,6 +307,12 @@ export default function TaskDetail() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardContent className="p-4">
+              <FileAttachments taskId={task.id} currentUserId={user?.id} />
+            </CardContent>
+          </Card>
+
           {(task.activityLogs?.length ?? 0) > 0 && (
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">Activity</CardTitle></CardHeader>
@@ -380,6 +389,14 @@ export default function TaskDetail() {
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Created By</label>
                 <p className="text-sm">{task.createdBy?.displayName ?? '—'}</p>
               </div>
+              {(task as any).isRecurring && (
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recurrence</label>
+                  <p className="text-sm capitalize">
+                    Every {(task as any).recurrenceInterval ?? 1} {(task as any).recurrencePattern}
+                  </p>
+                </div>
+              )}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Created</label>
                 <p className="text-sm">{formatDate(task.createdAt)}</p>

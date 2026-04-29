@@ -16,7 +16,11 @@ import type { Project, Task, User } from '@/types';
 function TaskForm({ open, onClose, onSaved, projectId, users }: {
   open: boolean; onClose: () => void; onSaved: () => void; projectId: string; users: User[];
 }) {
-  const [form, setForm] = useState({ title: '', description: '', priority: 'normal', assignedTo: '', dueDate: '' });
+  const [form, setForm] = useState({
+    title: '', description: '', priority: 'normal',
+    assignedTo: '', dueDate: '',
+    isRecurring: false, recurrencePattern: 'weekly', recurrenceInterval: 1,
+  });
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,14 +28,19 @@ function TaskForm({ open, onClose, onSaved, projectId, users }: {
     setSaving(true);
     try {
       await tasksApi.create({
-        ...form,
+        title: form.title,
+        description: form.description || null,
+        priority: form.priority,
         projectId,
         assignedTo: form.assignedTo || null,
         dueDate: form.dueDate || null,
+        isRecurring: form.isRecurring,
+        recurrencePattern: form.isRecurring ? form.recurrencePattern : null,
+        recurrenceInterval: form.isRecurring ? form.recurrenceInterval : null,
       });
       onSaved();
       onClose();
-      setForm({ title: '', description: '', priority: 'normal', assignedTo: '', dueDate: '' });
+      setForm({ title: '', description: '', priority: 'normal', assignedTo: '', dueDate: '', isRecurring: false, recurrencePattern: 'weekly', recurrenceInterval: 1 });
     } finally {
       setSaving(false);
     }
@@ -73,6 +82,33 @@ function TaskForm({ open, onClose, onSaved, projectId, users }: {
                 {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.displayName}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.isRecurring} onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })} />
+              Recurring task
+            </label>
+            {form.isRecurring && (
+              <div className="grid grid-cols-2 gap-3 pl-5">
+                <div className="space-y-1">
+                  <Label>Repeat every</Label>
+                  <Input type="number" min={1} max={99} value={form.recurrenceInterval}
+                    onChange={(e) => setForm({ ...form, recurrenceInterval: parseInt(e.target.value) || 1 })} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Period</Label>
+                  <Select value={form.recurrencePattern} onValueChange={(v) => setForm({ ...form, recurrencePattern: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Day(s)</SelectItem>
+                      <SelectItem value="weekly">Week(s)</SelectItem>
+                      <SelectItem value="monthly">Month(s)</SelectItem>
+                      <SelectItem value="yearly">Year(s)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
