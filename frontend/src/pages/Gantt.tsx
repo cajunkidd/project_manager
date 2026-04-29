@@ -246,7 +246,7 @@ export default function Gantt() {
 
                   {/* Label */}
                   <foreignObject x={4 + row.indent * 16} y={y + 4} width={LABEL_W - 8 - row.indent * 16} height={ROW_H - 8}>
-                    <div xmlns="http://www.w3.org/1999/xhtml" style={{ fontSize: 12, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: 12, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                       {isProject ? (
                         <strong style={{ color: '#1e293b' }}>
                           <a href={`/projects/${row.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>

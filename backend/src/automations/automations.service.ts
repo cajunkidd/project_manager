@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface AutomationCondition {
@@ -49,8 +50,8 @@ export class AutomationsService {
       data: {
         name: data.name,
         triggerType: data.triggerType,
-        conditions: data.conditions ?? [],
-        actions: data.actions,
+        conditions: (data.conditions ?? []) as unknown as Prisma.InputJsonValue,
+        actions: data.actions as unknown as Prisma.InputJsonValue,
         isActive: data.isActive ?? true,
         createdById: userId,
       },
