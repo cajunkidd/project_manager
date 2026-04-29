@@ -148,6 +148,13 @@ export const dependenciesApi = {
     api.delete(`/tasks/${taskId}/dependencies/${depId}`).then((r) => r.data),
 };
 
+export const apiTokensApi = {
+  list: () => api.get('/api-tokens').then((r) => r.data),
+  create: (data: { name: string; scopes?: string[]; expiresAt?: string | null }) =>
+    api.post('/api-tokens', data).then((r) => r.data),
+  revoke: (id: string) => api.delete(`/api-tokens/${id}`).then((r) => r.data),
+};
+
 export const webhooksApi = {
   list: () => api.get('/webhooks').then((r) => r.data),
   create: (data: { name: string; url: string; events: string[] }) =>

@@ -92,9 +92,13 @@ export class EmailService {
       ? `${this.appUrl}/projects/${notification.entityId}`
       : undefined;
 
+    const taskToken = notification.entityType === 'task' && notification.entityId
+      ? ` [task:${notification.entityId.slice(0, 8)}]`
+      : '';
+
     return this.send({
       to: user.email,
-      subject: notification.title,
+      subject: notification.title + taskToken,
       html: this.layout(notification.title, notification.message, link, 'Open in App'),
     });
   }

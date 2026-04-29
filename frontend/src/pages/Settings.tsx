@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import WebhooksManager from '@/components/WebhooksManager';
+import ApiTokensManager from '@/components/ApiTokensManager';
 import EmailPreferences from '@/components/EmailPreferences';
 import { formatDate } from '@/lib/utils';
 import type { User } from '@/types';
@@ -170,6 +171,7 @@ export default function Settings() {
           </CardContent>
         </Card>
         <EmailPreferences canSendDigestAll={false} />
+        <ApiTokensManager />
         <p className="text-sm text-muted-foreground">User management requires admin privileges.</p>
       </div>
     );
@@ -266,6 +268,7 @@ export default function Settings() {
 
       <h2 className="text-lg font-semibold pt-4">Integrations</h2>
       <WebhooksManager />
+      <ApiTokensManager />
     </div>
   );
 }

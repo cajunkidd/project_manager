@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
+import { ApiTokensModule } from './api-tokens/api-tokens.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -16,10 +17,12 @@ import { AiModule } from './ai/ai.module';
 import { TimeEntriesModule } from './time-entries/time-entries.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { EmailModule } from './email/email.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
     PrismaModule,
+    ApiTokensModule,
     AuthModule,
     UsersModule,
     ProjectsModule,
@@ -36,6 +39,7 @@ import { EmailModule } from './email/email.module';
     TimeEntriesModule,
     WebhooksModule,
     EmailModule,
+    SchedulerModule,
   ],
 })
 export class AppModule {}
