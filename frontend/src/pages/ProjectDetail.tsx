@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
-import { projectsApi, tasksApi, usersApi } from '@/lib/api';
+import { ArrowLeft, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { projectsApi, tasksApi, usersApi, aiApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AiTaskCreate from '@/components/AiTaskCreate';
 import { formatDate, isOverdue, TASK_STATUSES, PRIORITIES } from '@/lib/utils';
 import type { Project, Task, User } from '@/types';
 
@@ -125,6 +126,9 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<Project & { tasks?: Task[] } | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showAiCreate, setShowAiCreate] = useState(false);
+  const [aiSummary, setAiSummary] = useState('');
+  const [summarizing, setSummarizing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -140,6 +144,20 @@ export default function ProjectDetail() {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  const handleAiSummary = async () => {
+    if (!id) return;
+    setSummarizing(true);
+    setAiSummary('');
+    try {
+      const summary = await aiApi.projectSummary(id);
+      setAiSummary(summary ?? '');
+    } catch {
+      setAiSummary('AI summary unavailable — check ANTHROPIC_API_KEY.');
+    } finally {
+      setSummarizing(false);
+    }
+  };
 
   if (loading) return <div className="text-muted-foreground">Loading…</div>;
   if (!project) return <div className="text-red-600">Project not found.</div>;
@@ -159,11 +177,27 @@ export default function ProjectDetail() {
           <h1 className="text-2xl font-bold">{project.name}</h1>
           {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <StatusBadge status={project.status} />
           <PriorityBadge priority={project.priority} />
+          <Button size="sm" variant="outline" onClick={handleAiSummary} disabled={summarizing}>
+            {summarizing
+              ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Summarizing…</>
+              : <><Sparkles className="mr-1 h-3 w-3 text-purple-500" /> AI Summary</>}
+          </Button>
         </div>
       </div>
+
+      {aiSummary && (
+        <Card className="border-purple-200 bg-purple-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm whitespace-pre-wrap">{aiSummary}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3 text-sm">
         <div>
@@ -183,9 +217,14 @@ export default function ProjectDetail() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base">Tasks ({tasks.length})</CardTitle>
-          <Button size="sm" onClick={() => setShowTaskForm(true)}>
-            <Plus className="mr-1 h-3 w-3" /> Add Task
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setShowAiCreate(true)}>
+              <Sparkles className="mr-1 h-3 w-3 text-purple-500" /> AI Create
+            </Button>
+            <Button size="sm" onClick={() => setShowTaskForm(true)}>
+              <Plus className="mr-1 h-3 w-3" /> Add Task
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {tasks.length === 0 ? (
@@ -225,6 +264,15 @@ export default function ProjectDetail() {
         onSaved={load}
         projectId={id!}
         users={users}
+      />
+
+      <AiTaskCreate
+        open={showAiCreate}
+        onClose={() => setShowAiCreate(false)}
+        onCreated={load}
+        projects={project ? [project as any] : []}
+        users={users}
+        defaultProjectId={id}
       />
     </div>
   );

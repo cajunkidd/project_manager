@@ -12,6 +12,8 @@ import { ReportsModule } from './reports/reports.module';
 import { FormsModule } from './forms/forms.module';
 import { AutomationsModule } from './automations/automations.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { AiModule } from './ai/ai.module';
+import { TimeEntriesModule } from './time-entries/time-entries.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { UploadsModule } from './uploads/uploads.module';
     FormsModule,
     AutomationsModule,
     UploadsModule,
+    AiModule,
+    TimeEntriesModule,
   ],
 })
 export class AppModule {}

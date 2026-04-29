@@ -1,23 +1,28 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import { tasksApi } from '@/lib/api';
+import { Search, Sparkles } from 'lucide-react';
+import { tasksApi, projectsApi, usersApi } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge';
+import AiTaskCreate from '@/components/AiTaskCreate';
 import { formatDate, isOverdue, TASK_STATUSES, PRIORITIES } from '@/lib/utils';
-import type { Task } from '@/types';
+import type { Task, User, Project } from '@/types';
 
 export default function MyTasks() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showAiCreate, setShowAiCreate] = useState(false);
 
-  useEffect(() => {
+  const loadTasks = () => {
     if (!user) return;
     setLoading(true);
     tasksApi.list({
@@ -29,11 +34,25 @@ export default function MyTasks() {
       setTasks(data);
       setLoading(false);
     });
-  }, [user, statusFilter, priorityFilter, search]);
+  };
+
+  useEffect(() => { loadTasks(); }, [user, statusFilter, priorityFilter, search]);
+
+  useEffect(() => {
+    Promise.all([projectsApi.list(), usersApi.list()]).then(([p, u]) => {
+      setProjects(p);
+      setUsers(u);
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">My Tasks</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">My Tasks</h1>
+        <Button size="sm" variant="outline" onClick={() => setShowAiCreate(true)}>
+          <Sparkles className="mr-1 h-3 w-3 text-purple-500" /> AI Create Task
+        </Button>
+      </div>
 
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48 max-w-sm">
@@ -94,6 +113,14 @@ export default function MyTasks() {
           })}
         </div>
       )}
+
+      <AiTaskCreate
+        open={showAiCreate}
+        onClose={() => setShowAiCreate(false)}
+        onCreated={loadTasks}
+        projects={projects}
+        users={users}
+      />
     </div>
   );
 }

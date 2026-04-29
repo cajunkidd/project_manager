@@ -199,4 +199,43 @@ export class TasksService {
     await this.activityLogs.log('task', id, 'deleted', null, null, userId);
     return this.prisma.task.delete({ where: { id } });
   }
+
+  async getDependencies(id: string) {
+    const [blockedBy, blocking] = await Promise.all([
+      this.prisma.taskDependency.findMany({
+        where: { taskId: id },
+        include: {
+          dependsOnTask: {
+            select: { id: true, title: true, status: true, priority: true, assignee: { select: { id: true, displayName: true } } },
+          },
+        },
+      }),
+      this.prisma.taskDependency.findMany({
+        where: { dependsOnTaskId: id },
+        include: {
+          task: {
+            select: { id: true, title: true, status: true, priority: true, assignee: { select: { id: true, displayName: true } } },
+          },
+        },
+      }),
+    ]);
+    return {
+      blockedBy: blockedBy.map((d) => ({ depId: d.id, ...d.dependsOnTask })),
+      blocking: blocking.map((d) => ({ depId: d.id, ...d.task })),
+    };
+  }
+
+  async addDependency(id: string, dependsOnTaskId: string) {
+    if (id === dependsOnTaskId) throw new Error('A task cannot depend on itself');
+    return this.prisma.taskDependency.create({
+      data: { taskId: id, dependsOnTaskId },
+      include: {
+        dependsOnTask: { select: { id: true, title: true, status: true } },
+      },
+    });
+  }
+
+  async removeDependency(depId: string) {
+    return this.prisma.taskDependency.delete({ where: { id: depId } });
+  }
 }

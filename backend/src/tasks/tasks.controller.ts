@@ -41,4 +41,19 @@ export class TasksController {
   remove(@Param('id') id: string, @Request() req: any) {
     return this.tasksService.remove(id, req.user.id);
   }
+
+  @Get(':id/dependencies')
+  getDependencies(@Param('id') id: string) {
+    return this.tasksService.getDependencies(id);
+  }
+
+  @Post(':id/dependencies')
+  addDependency(@Param('id') id: string, @Body('dependsOnTaskId') dependsOnTaskId: string) {
+    return this.tasksService.addDependency(id, dependsOnTaskId);
+  }
+
+  @Delete(':id/dependencies/:depId')
+  removeDependency(@Param('depId') depId: string) {
+    return this.tasksService.removeDependency(depId);
+  }
 }

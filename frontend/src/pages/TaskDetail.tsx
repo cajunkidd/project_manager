@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge';
 import FileAttachments from '@/components/FileAttachments';
+import TimeLogger from '@/components/TimeLogger';
+import TaskDependencies from '@/components/TaskDependencies';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDate, TASK_STATUSES, PRIORITIES } from '@/lib/utils';
 import type { Task, User } from '@/types';
@@ -312,6 +314,10 @@ export default function TaskDetail() {
               <FileAttachments taskId={task.id} currentUserId={user?.id} />
             </CardContent>
           </Card>
+
+          <TaskDependencies taskId={task.id} />
+
+          <TimeLogger taskId={task.id} currentUserId={user?.id} />
 
           {(task.activityLogs?.length ?? 0) > 0 && (
             <Card>

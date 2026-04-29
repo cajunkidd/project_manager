@@ -107,6 +107,37 @@ export const formsApi = {
     api.get('/forms/submissions', { params }).then((r) => r.data),
 };
 
+export const aiApi = {
+  status: () => api.get('/ai/status').then((r) => r.data),
+  parseTask: (text: string) => api.post('/ai/parse-task', { text }).then((r) => r.data),
+  enhance: (title: string, description: string) =>
+    api.post('/ai/enhance', { title, description }).then((r) => r.data.text),
+  projectSummary: (id: string) =>
+    api.post(`/ai/project-summary/${id}`).then((r) => r.data.summary),
+  suggestPriority: (title: string, description: string) =>
+    api.post('/ai/suggest-priority', { title, description }).then((r) => r.data),
+};
+
+export const timeEntriesApi = {
+  getForTask: (taskId: string) => api.get(`/tasks/${taskId}/time`).then((r) => r.data),
+  create: (taskId: string, data: { minutes: number; notes?: string; loggedAt?: string }) =>
+    api.post(`/tasks/${taskId}/time`, data).then((r) => r.data),
+  update: (id: string, data: any) => api.patch(`/time-entries/${id}`, data).then((r) => r.data),
+  delete: (id: string) => api.delete(`/time-entries/${id}`).then((r) => r.data),
+  myEntries: (params?: { from?: string; to?: string }) =>
+    api.get('/time-entries/my', { params }).then((r) => r.data),
+  report: (params?: { userId?: string; from?: string; to?: string }) =>
+    api.get('/time-entries/report', { params }).then((r) => r.data),
+};
+
+export const dependenciesApi = {
+  get: (taskId: string) => api.get(`/tasks/${taskId}/dependencies`).then((r) => r.data),
+  add: (taskId: string, dependsOnTaskId: string) =>
+    api.post(`/tasks/${taskId}/dependencies`, { dependsOnTaskId }).then((r) => r.data),
+  remove: (taskId: string, depId: string) =>
+    api.delete(`/tasks/${taskId}/dependencies/${depId}`).then((r) => r.data),
+};
+
 export const attachmentsApi = {
   listForTask: (taskId: string) =>
     api.get(`/tasks/${taskId}/attachments`).then((r) => r.data),

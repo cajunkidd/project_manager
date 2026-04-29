@@ -30,6 +30,7 @@ model User {
   formSubmissions  FormSubmission[]
   createdAutomations AutomationRule[]
   uploadedAttachments Attachment[]
+  timeEntries  TimeEntry[]
 
   @@map("users")
 }
@@ -87,6 +88,7 @@ model Task {
   createdBy    User?     @relation("TaskCreator", fields: [createdById], references: [id])
   comments     Comment[]
   attachments  Attachment[]
+  timeEntries  TimeEntry[]
   dependsOn    TaskDependency[] @relation("DependentTask")
   dependedOnBy TaskDependency[] @relation("DependsOnTask")
   formSubmissions FormSubmission[] @relation("SubmissionTask")
@@ -237,4 +239,19 @@ model Attachment {
   uploadedBy User?    @relation(fields: [uploadedById], references: [id])
 
   @@map("attachments")
+}
+
+model TimeEntry {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  minutes   Int
+  notes     String?
+  loggedAt  DateTime @default(now()) @map("logged_at") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("time_entries")
 }
