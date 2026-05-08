@@ -185,6 +185,18 @@ const extractRequestSchema = z.object({
   text: z.string().min(10),
 });
 
+const taskSuggestionSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().nullable(),
+  priority: z.enum(["low", "normal", "high", "urgent"]),
+  assignedToUserId: z.string().nullable(),
+  assigneeRationale: z.string().nullable(),
+  dueDate: z.string().nullable(),
+});
+const extractionShape = z.object({
+  tasks: z.array(taskSuggestionSchema),
+});
+
 aiRouter.post("/extract-tasks", async (req, res) => {
   const { projectId, text } = extractRequestSchema.parse(req.body);
 
@@ -213,45 +225,10 @@ aiRouter.post("/extract-tasks", async (req, res) => {
       "Only emit tasks that are clearly described in the input. Do not invent work the user did not mention.",
       "When a person is named, set assignedToUserId to the matching user from the roster.",
       "Use ISO 8601 dates only when the input names an explicit date. Otherwise leave dueDate null.",
-    ].join(" "),
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            tasks: {
-              type: "array",
-              items: {
-                type: "object",
-                additionalProperties: false,
-                properties: {
-                  title: { type: "string" },
-                  description: { type: ["string", "null"] },
-                  priority: {
-                    type: "string",
-                    enum: ["low", "normal", "high", "urgent"],
-                  },
-                  assignedToUserId: { type: ["string", "null"] },
-                  assigneeRationale: { type: ["string", "null"] },
-                  dueDate: { type: ["string", "null"] },
-                },
-                required: [
-                  "title",
-                  "description",
-                  "priority",
-                  "assignedToUserId",
-                  "assigneeRationale",
-                  "dueDate",
-                ],
-              },
-            },
-          },
-          required: ["tasks"],
-        },
-      },
-    },
+      "",
+      "Respond with a single JSON object — no preamble, no markdown fences. Shape:",
+      `{"tasks": [{"title": string, "description": string|null, "priority": "low"|"normal"|"high"|"urgent", "assignedToUserId": string|null, "assigneeRationale": string|null, "dueDate": string|null}]}`,
+    ].join("\n"),
     messages: [
       {
         role: "user",
@@ -276,15 +253,19 @@ aiRouter.post("/extract-tasks", async (req, res) => {
     (b): b is Anthropic.TextBlock => b.type === "text",
   );
   if (!textBlock) throw new HttpError(502, "ai_no_text_response");
-  let parsed: { tasks: unknown };
+  let raw: unknown;
   try {
-    parsed = JSON.parse(textBlock.text);
+    raw = JSON.parse(textBlock.text);
   } catch {
     throw new HttpError(502, "ai_invalid_json");
   }
+  const parsed = extractionShape.safeParse(raw);
+  if (!parsed.success) {
+    throw new HttpError(502, "ai_invalid_shape");
+  }
 
   res.json({
-    suggestions: parsed.tasks ?? [],
+    suggestions: parsed.data.tasks,
     usage: msg.usage,
     model: msg.model,
   });

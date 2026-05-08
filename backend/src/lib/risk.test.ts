@@ -68,16 +68,17 @@ describe("computeRisk", () => {
   });
 
   it("caps the score at 100", () => {
-    const overdueTasks: Parameters<typeof computeRisk>[0]["tasks"] = [];
-    for (let i = 0; i < 20; i++) {
-      overdueTasks.push({
-        status: "to_do",
-        dueDate: yesterday,
-        assignedToId: null,
-      });
+    // Stack every signal at its max: 40 overdue + 20 blocked + 15 unassigned
+    // + 15 stale + 20 past-due = 110 raw, capped to 100.
+    const tasks: Parameters<typeof computeRisk>[0]["tasks"] = [];
+    for (let i = 0; i < 10; i++) {
+      tasks.push({ status: "to_do", dueDate: yesterday, assignedToId: null });
+    }
+    for (let i = 0; i < 5; i++) {
+      tasks.push({ status: "waiting", dueDate: null, assignedToId: null });
     }
     const r = computeRisk({
-      tasks: overdueTasks,
+      tasks,
       projectDueDate: yesterday,
       lastActivityAt: new Date("2026-01-01"),
       now: NOW,
