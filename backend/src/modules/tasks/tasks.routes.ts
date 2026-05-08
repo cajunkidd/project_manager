@@ -53,9 +53,44 @@ const reorderSchema = z.object({
     .min(1),
 });
 
+const bulkUpdateSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(500),
+  patch: z
+    .object({
+      status: z.enum(TASK_STATUSES).optional(),
+      priority: z.enum(PRIORITIES).optional(),
+      assignedToId: z.string().uuid().nullable().optional(),
+      projectId: z.string().uuid().nullable().optional(),
+      dueDate: isoDate.nullable().optional(),
+    })
+    .refine((p) => Object.keys(p).length > 0, {
+      message: 'patch must include at least one field',
+    }),
+});
+
+const bulkDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(500),
+});
+
 export const tasksRouter = Router();
 
 tasksRouter.use(authMiddleware);
+
+tasksRouter.patch(
+  '/bulk',
+  asyncHandler(async (req, res) => {
+    const { ids, patch } = bulkUpdateSchema.parse(req.body);
+    res.json(await tasksService.bulkUpdate(ids, patch, req.user?.id));
+  }),
+);
+
+tasksRouter.post(
+  '/bulk-delete',
+  asyncHandler(async (req, res) => {
+    const { ids } = bulkDeleteSchema.parse(req.body);
+    res.json(await tasksService.bulkRemove(ids, req.user?.id));
+  }),
+);
 
 tasksRouter.patch(
   '/reorder',

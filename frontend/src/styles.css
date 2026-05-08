@@ -783,3 +783,24 @@ label {
   border-top: 1px solid var(--border);
   text-align: center;
 }
+
+.bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+.bulk-bar select {
+  max-width: 180px;
+}
+
+.row-selected td {
+  background: rgba(37, 99, 235, 0.06);
+}

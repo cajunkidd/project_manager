@@ -106,9 +106,14 @@ reachable at the URL in `tests/setupEnv.ts`. The provided
   on done → in_progress → done flicker. Global search at `/api/search`
   matches across tasks (title + description), projects (name + description),
   and comments (body); UI is a debounced topbar search box with a results
-  dropdown plus a dedicated `/search` page.
+  dropdown plus a dedicated `/search` page. Bulk task operations:
+  `PATCH /api/tasks/bulk` applies a partial patch (status / priority /
+  assignee / project / due date) to many ids; `POST /api/tasks/bulk-delete`
+  removes many ids. Failures are reported per-id without aborting the
+  batch. My Tasks gains row checkboxes, select-all, and a bulk action bar
+  for triage.
 
-178 tests across both workspaces (139 backend integration + 39 frontend
+185 tests across both workspaces (146 backend integration + 39 frontend
 unit). The platform runs against PostgreSQL via Docker Compose; production
 deployments swap the dev DB URL and either keep the heuristic AI / stub
 email defaults or set `AI_PROVIDER=anthropic` + `EMAIL_PROVIDER=smtp` with

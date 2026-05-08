@@ -25,5 +25,15 @@ export const tasksApi = {
     http.patch<Task>(`/tasks/${id}/status`, { status }),
   reorder: (items: { id: string; status: TaskStatus; sortOrder: number }[]) =>
     http.patch<{ updated: number }>('/tasks/reorder', { items }),
+  bulkUpdate: (ids: string[], patch: Partial<Task>) =>
+    http.patch<{ updated: number; ids: string[]; failed: { id: string; reason: string }[] }>(
+      '/tasks/bulk',
+      { ids, patch },
+    ),
+  bulkRemove: (ids: string[]) =>
+    http.post<{ removed: number; ids: string[]; failed: { id: string; reason: string }[] }>(
+      '/tasks/bulk-delete',
+      { ids },
+    ),
   remove: (id: string) => http.delete(`/tasks/${id}`),
 };

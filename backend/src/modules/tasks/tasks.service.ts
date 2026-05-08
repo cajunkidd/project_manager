@@ -225,6 +225,42 @@ export const tasksService = {
     return this.update(id, { status }, userId);
   },
 
+  async bulkUpdate(ids: string[], patch: UpdateTaskInput, userId?: string) {
+    if (!ids.length) return { updated: 0 };
+    const updated: string[] = [];
+    const failed: { id: string; reason: string }[] = [];
+    for (const id of ids) {
+      try {
+        await this.update(id, patch, userId);
+        updated.push(id);
+      } catch (err) {
+        failed.push({
+          id,
+          reason: err instanceof Error ? err.message : 'unknown',
+        });
+      }
+    }
+    return { updated: updated.length, ids: updated, failed };
+  },
+
+  async bulkRemove(ids: string[], userId?: string) {
+    if (!ids.length) return { removed: 0 };
+    const removed: string[] = [];
+    const failed: { id: string; reason: string }[] = [];
+    for (const id of ids) {
+      try {
+        await this.remove(id, userId);
+        removed.push(id);
+      } catch (err) {
+        failed.push({
+          id,
+          reason: err instanceof Error ? err.message : 'unknown',
+        });
+      }
+    }
+    return { removed: removed.length, ids: removed, failed };
+  },
+
   async remove(id: string, userId?: string) {
     await this.getById(id);
     await prisma.task.delete({ where: { id } });
