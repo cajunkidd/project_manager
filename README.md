@@ -53,10 +53,13 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
 
 - **Phase 0 — Foundation:** done. Schema, auth-ready middleware, modular
   backend.
-- **Phase 1 — MVP:** core surface in place — Projects, Tasks (with subtasks),
-  Comments, Activity log, Kanban board, My Tasks, Dashboard.
-- **Phase 2+:** intake forms, automation engine, notifications UI, reports,
-  AI features, integrations — not yet implemented.
+- **Phase 1 — MVP:** done. Projects, Tasks (with subtasks), Comments,
+  Activity log, Kanban board, My Tasks, Dashboard.
+- **Phase 2 — Workflow engine:** done. In-app notifications (with @mention
+  detection), intake form builder + submission flow that auto-creates tasks,
+  trigger/action automation engine wired into the internal event bus.
+- **Phase 3+:** reports, workload, Gantt, AI features, integrations — not
+  yet implemented.
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

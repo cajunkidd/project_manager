@@ -29,6 +29,10 @@ model User {
   comments          Comment[]
   activityLogs      ActivityLog[]
   notifications     Notification[]
+  defaultForForms   Form[]           @relation("FormDefaultAssignee")
+  createdForms      Form[]           @relation("FormCreator")
+  formSubmissions   FormSubmission[] @relation("FormSubmitter")
+  automationRules   AutomationRule[] @relation("AutomationCreator")
 }
 
 model Project {
@@ -50,6 +54,7 @@ model Project {
   createdBy User?     @relation("ProjectCreator", fields: [createdById], references: [id])
   tasks     Task[]
   comments  Comment[]
+  forms     Form[]    @relation("FormDefaultProject")
 
   @@index([status])
   @@index([ownerId])
@@ -76,9 +81,10 @@ model Task {
   project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   parentTask Task?     @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
   subtasks   Task[]    @relation("TaskSubtasks")
-  assignedTo User?     @relation("TaskAssignee", fields: [assignedToId], references: [id])
-  createdBy  User?     @relation("TaskCreator", fields: [createdById], references: [id])
-  comments   Comment[]
+  assignedTo      User?            @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy       User?            @relation("TaskCreator", fields: [createdById], references: [id])
+  comments        Comment[]
+  formSubmissions FormSubmission[] @relation("FormSubmissionTask")
 
   @@index([projectId])
   @@index([assignedToId])
@@ -133,4 +139,72 @@ model Notification {
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, isRead])
+}
+
+model Form {
+  id                 String    @id @default(uuid())
+  name               String
+  description        String?
+  defaultProjectId   String?
+  defaultAssigneeId  String?
+  defaultPriority    String    @default("normal")
+  isActive           Boolean   @default(true)
+  createdById        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  defaultProject  Project?         @relation("FormDefaultProject", fields: [defaultProjectId], references: [id])
+  defaultAssignee User?            @relation("FormDefaultAssignee", fields: [defaultAssigneeId], references: [id])
+  createdBy       User?            @relation("FormCreator", fields: [createdById], references: [id])
+  fields          FormField[]
+  submissions     FormSubmission[]
+
+  @@index([isActive])
+}
+
+model FormField {
+  id         String   @id @default(uuid())
+  formId     String
+  label      String
+  fieldType  String // text | textarea | dropdown | checkbox | date | user
+  isRequired Boolean  @default(false)
+  options    String? // JSON-encoded for dropdown options
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+}
+
+model FormSubmission {
+  id            String   @id @default(uuid())
+  formId        String
+  submittedById String?
+  responseData  String   // JSON-encoded answers keyed by field id
+  createdTaskId String?
+  createdAt     DateTime @default(now())
+
+  form         Form  @relation(fields: [formId], references: [id], onDelete: Cascade)
+  submittedBy  User? @relation("FormSubmitter", fields: [submittedById], references: [id])
+  createdTask  Task? @relation("FormSubmissionTask", fields: [createdTaskId], references: [id])
+
+  @@index([formId])
+  @@index([submittedById])
+}
+
+model AutomationRule {
+  id          String   @id @default(uuid())
+  name        String
+  triggerType String
+  conditions  String? // JSON-encoded
+  actions     String   // JSON-encoded array
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User? @relation("AutomationCreator", fields: [createdById], references: [id])
+
+  @@index([triggerType, isActive])
 }

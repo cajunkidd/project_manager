@@ -1,6 +1,27 @@
 import { prisma } from '../../db/prisma';
+import { eventBus } from '../../events/bus';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
+
+const MENTION_RE = /@([a-zA-Z0-9._-]+)/g;
+
+async function resolveMentions(body: string, excludeUserId?: string): Promise<string[]> {
+  const handles = new Set<string>();
+  for (const match of body.matchAll(MENTION_RE)) handles.add(match[1]);
+  if (!handles.size) return [];
+
+  const handleList = Array.from(handles);
+  const users = await prisma.user.findMany({
+    where: {
+      OR: [
+        { displayName: { in: handleList } },
+        ...handleList.map((h) => ({ email: { startsWith: `${h}@` } })),
+      ],
+    },
+    select: { id: true },
+  });
+  return Array.from(new Set(users.map((u) => u.id))).filter((id) => id !== excludeUserId);
+}
 
 export interface CreateCommentInput {
   taskId?: string | null;
@@ -60,6 +81,17 @@ export const commentsService = {
         userId,
       });
     }
+
+    const mentionedUserIds = await resolveMentions(input.body, userId);
+    await eventBus.emit({
+      type: 'comment.created',
+      taskId: input.taskId ?? null,
+      projectId: input.projectId ?? null,
+      body: input.body,
+      authorId: userId,
+      mentionedUserIds,
+    });
+
     return comment;
   },
 

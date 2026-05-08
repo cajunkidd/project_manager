@@ -1,10 +1,16 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { AppShell } from './layout/AppShell';
+import { NotificationsProvider } from './notifications/NotificationsContext';
+import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { FormBuilderPage } from './pages/FormBuilderPage';
+import { FormsPage } from './pages/FormsPage';
+import { FormSubmitPage } from './pages/FormSubmitPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyTasksPage } from './pages/MyTasksPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -17,6 +23,13 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin' && user.role !== 'manager') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 export function App() {
   return (
     <Routes>
@@ -25,7 +38,9 @@ export function App() {
       <Route
         element={
           <RequireAuth>
-            <AppShell />
+            <NotificationsProvider>
+              <AppShell />
+            </NotificationsProvider>
           </RequireAuth>
         }
       >
@@ -35,6 +50,33 @@ export function App() {
         <Route path="projects/:id" element={<ProjectDetailPage />} />
         <Route path="tasks/:id" element={<TaskDetailPage />} />
         <Route path="board" element={<BoardPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="forms" element={<FormsPage />} />
+        <Route path="forms/:id/submit" element={<FormSubmitPage />} />
+        <Route
+          path="forms/new"
+          element={
+            <RequireAdmin>
+              <FormBuilderPage mode="new" />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="forms/:id/edit"
+          element={
+            <RequireAdmin>
+              <FormBuilderPage mode="edit" />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="automations"
+          element={
+            <RequireAdmin>
+              <AutomationsPage />
+            </RequireAdmin>
+          }
+        />
         <Route path="*" element={<div>Not found.</div>} />
       </Route>
     </Routes>

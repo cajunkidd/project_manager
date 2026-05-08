@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db/prisma';
+import { eventBus } from '../../events/bus';
 import { NotFoundError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
 
@@ -72,6 +73,7 @@ export const projectsService = {
       newValue: { name: project.name, status: project.status },
       userId: userId ?? null,
     });
+    await eventBus.emit({ type: 'project.created', project, actorId: userId ?? null });
     return project;
   },
 
@@ -94,6 +96,7 @@ export const projectsService = {
       newValue: { status: updated.status, name: updated.name, priority: updated.priority },
       userId: userId ?? null,
     });
+    await eventBus.emit({ type: 'project.updated', project: updated, actorId: userId ?? null });
     return updated;
   },
 

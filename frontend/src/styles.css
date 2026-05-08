@@ -402,3 +402,133 @@ label {
   font-weight: 600;
   margin-top: 4px;
 }
+
+.bell-wrap {
+  position: relative;
+}
+
+.bell-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.bell-btn:hover {
+  background: var(--bg);
+}
+
+.bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.bell-menu {
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  z-index: 50;
+}
+
+.bell-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.bell-mark-all {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+}
+
+.bell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.bell-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.bell-item button {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.bell-item button:hover {
+  background: var(--bg);
+}
+
+.bell-item.unread {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.bell-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bell-message {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 2px;
+}
+
+.bell-date {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.bell-empty {
+  padding: 16px;
+  font-size: 13px;
+}
+
+.bell-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.link {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db/prisma';
+import { eventBus } from '../../events/bus';
 import { NotFoundError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
 
@@ -87,6 +88,15 @@ export const tasksService = {
       newValue: { title: task.title, status: task.status, priority: task.priority },
       userId: userId ?? null,
     });
+    await eventBus.emit({ type: 'task.created', task, actorId: userId ?? null });
+    if (task.assignedToId && task.assignedToId !== userId) {
+      await eventBus.emit({
+        type: 'task.assigned',
+        task,
+        assigneeId: task.assignedToId,
+        actorId: userId ?? null,
+      });
+    }
     return task;
   },
 
@@ -123,6 +133,41 @@ export const tasksService = {
       },
       userId: userId ?? null,
     });
+
+    await eventBus.emit({
+      type: 'task.updated',
+      task: updated,
+      before: {
+        status: before.status,
+        priority: before.priority,
+        assignedToId: before.assignedToId,
+        title: before.title,
+      },
+      actorId: userId ?? null,
+    });
+
+    if (updated.status !== before.status) {
+      await eventBus.emit({
+        type: 'task.status_changed',
+        task: updated,
+        fromStatus: before.status,
+        toStatus: updated.status,
+        actorId: userId ?? null,
+      });
+    }
+    if (
+      updated.assignedToId &&
+      updated.assignedToId !== before.assignedToId &&
+      updated.assignedToId !== userId
+    ) {
+      await eventBus.emit({
+        type: 'task.assigned',
+        task: updated,
+        assigneeId: updated.assignedToId,
+        actorId: userId ?? null,
+      });
+    }
+
     return updated;
   },
 
