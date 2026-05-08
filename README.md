@@ -71,6 +71,7 @@ npm run dev:frontend
 | Reports | `/api/reports/tasks-by-user`, `overdue`, `projects-by-status`, `completed-by-week`, `avg-completion-time`, `blocked` |
 | Workload | `/api/reports/workload` per-user counts (open/overdue/urgent/due-this-week/done-this-week) with overload highlighting |
 | Intake Forms | `/api/forms` CRUD, `/api/forms/:id/submit` creates a task in the form's default project; admin field editor (text, textarea, dropdown, checkbox, date, user picker) |
+| Automations | `/api/automations` CRUD; trigger/action engine fires on `task_created`, `task_status_changed`, `comment_created`, `form_submitted`. Actions: `send_notification`, `assign_user`, `change_status`, `change_priority`, `add_comment`. Conditions are equality matches against the event entity. |
 | Deep links | `?task=<id>` opens the task drawer anywhere; the bell deep-links into it |
 
 There is **no auth yet**. The frontend uses a simple "acting as" user switcher

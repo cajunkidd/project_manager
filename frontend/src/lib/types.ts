@@ -145,6 +145,39 @@ export interface FormSubmission {
   createdTask?: { id: string; title: string; status: TaskStatus } | null;
 }
 
+export type AutomationTrigger =
+  | "task_created"
+  | "task_status_changed"
+  | "comment_created"
+  | "form_submitted";
+
+export type AutomationActionType =
+  | "send_notification"
+  | "assign_user"
+  | "change_status"
+  | "change_priority"
+  | "add_comment";
+
+export interface AutomationAction {
+  type: AutomationActionType;
+  userId?: string;
+  message?: string;
+  status?: string;
+  priority?: string;
+  body?: string;
+}
+
+export interface AutomationRule {
+  id: string;
+  name: string;
+  triggerType: AutomationTrigger;
+  conditions: Record<string, unknown> | null;
+  actions: AutomationAction[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Notification {
   id: string;
   userId: string;

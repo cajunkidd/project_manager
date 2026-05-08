@@ -4,6 +4,7 @@ import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
 import { notifyMentions } from "../lib/mentions";
+import { runAutomations } from "../lib/automation";
 
 export const commentsRouter = Router();
 
@@ -60,6 +61,16 @@ commentsRouter.post("/", async (req, res) => {
       entityId: data.projectId,
     });
   }
+  await runAutomations({
+    trigger: "comment_created",
+    comment: {
+      id: comment.id,
+      taskId: comment.taskId,
+      projectId: comment.projectId,
+      userId: comment.userId,
+      body: comment.body,
+    },
+  });
   res.status(201).json(comment);
 });
 

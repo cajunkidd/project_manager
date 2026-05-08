@@ -7,6 +7,7 @@ import { dashboardRouter } from "./dashboard";
 import { notificationsRouter } from "./notifications";
 import { reportsRouter } from "./reports";
 import { formsRouter } from "./forms";
+import { automationsRouter } from "./automations";
 
 export const router = Router();
 
@@ -18,3 +19,4 @@ router.use("/dashboard", dashboardRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/reports", reportsRouter);
 router.use("/forms", formsRouter);
+router.use("/automations", automationsRouter);

@@ -4,6 +4,7 @@ import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
 import { notify } from "../lib/notify";
+import { runAutomations } from "../lib/automation";
 
 export const tasksRouter = Router();
 
@@ -134,6 +135,7 @@ tasksRouter.post("/", async (req, res) => {
       entityId: task.id,
     });
   }
+  await runAutomations({ trigger: "task_created", task });
   res.status(201).json(task);
 });
 
@@ -173,6 +175,13 @@ tasksRouter.patch("/:id", async (req, res) => {
       entityId: task.id,
     });
   }
+  if (data.status && data.status !== before.status) {
+    await runAutomations({
+      trigger: "task_status_changed",
+      task,
+      oldStatus: before.status,
+    });
+  }
   res.json(task);
 });
 
@@ -194,6 +203,13 @@ tasksRouter.patch("/:id/status", async (req, res) => {
     oldValue: { status: before.status },
     newValue: { status: task.status },
   });
+  if (status !== before.status) {
+    await runAutomations({
+      trigger: "task_status_changed",
+      task,
+      oldStatus: before.status,
+    });
+  }
   res.json(task);
 });
 

@@ -4,6 +4,7 @@ import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
 import { notify } from "../lib/notify";
+import { runAutomations } from "../lib/automation";
 
 export const formsRouter = Router();
 
@@ -239,6 +240,17 @@ formsRouter.post("/:id/submit", async (req, res) => {
       entityId: task.id,
     });
   }
+
+  await runAutomations({
+    trigger: "form_submitted",
+    formId: form.id,
+    task: {
+      id: task.id,
+      projectId: task.projectId,
+      assignedToId: task.assignedToId,
+      title: task.title,
+    },
+  });
 
   res.status(201).json({ submission, task });
 });

@@ -10,6 +10,7 @@ import Workload from "./pages/Workload";
 import Forms from "./pages/Forms";
 import FormSubmit from "./pages/FormSubmit";
 import FormEdit from "./pages/FormEdit";
+import Automations from "./pages/Automations";
 import Settings from "./pages/Settings";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/forms" element={<Forms />} />
         <Route path="/forms/:id" element={<FormSubmit />} />
         <Route path="/forms/:id/edit" element={<FormEdit />} />
+        <Route path="/automations" element={<Automations />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<div className="p-6">Not found</div>} />
       </Route>

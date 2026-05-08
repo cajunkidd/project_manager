@@ -196,6 +196,21 @@ model FormSubmission {
   @@map("form_submissions")
 }
 
+model AutomationRule {
+  id          String   @id @default(uuid())
+  name        String
+  triggerType String   @map("trigger_type")
+  conditions  Json?
+  actions     Json
+  isActive    Boolean  @default(true) @map("is_active")
+  createdById String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([triggerType, isActive])
+  @@map("automation_rules")
+}
+
 model Notification {
   id         String   @id @default(uuid())
   userId     String   @map("user_id")
