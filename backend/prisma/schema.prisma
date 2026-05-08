@@ -36,6 +36,7 @@ model User {
   apiTokens         ApiToken[]
   webhooks          WebhookSubscription[]
   uploadedAttachments Attachment[]
+  timeEntries       TimeEntry[]
 }
 
 model Project {
@@ -93,6 +94,7 @@ model Task {
   attachments     Attachment[]
   dependencies    TaskDependency[] @relation("TaskDependsOn")
   dependents      TaskDependency[] @relation("TaskDependent")
+  timeEntries     TimeEntry[]
 
   @@index([projectId])
   @@index([assignedToId])
@@ -312,4 +314,23 @@ model TaskDependency {
   @@unique([taskId, dependsOnTaskId])
   @@index([taskId])
   @@index([dependsOnTaskId])
+}
+
+model TimeEntry {
+  id         String    @id @default(uuid())
+  taskId     String
+  userId     String
+  startedAt  DateTime
+  endedAt    DateTime?
+  durationMs Int? // computed when endedAt is set; null while running
+  note       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([userId, endedAt])
 }

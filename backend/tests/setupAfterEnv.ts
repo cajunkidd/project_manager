@@ -7,6 +7,7 @@ beforeEach(async () => {
   await prisma.emailLog.deleteMany();
   await prisma.attachment.deleteMany();
   await prisma.taskDependency.deleteMany();
+  await prisma.timeEntry.deleteMany();
   await prisma.formSubmission.deleteMany();
   await prisma.formField.deleteMany();
   await prisma.form.deleteMany();

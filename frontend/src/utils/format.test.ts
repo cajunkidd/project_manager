@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatDate,
+  formatDuration,
   isOverdue,
   priorityLabel,
   projectStatusLabel,
@@ -65,5 +66,29 @@ describe('formatDate', () => {
 
   it('returns a localized date for valid ISO input', () => {
     expect(formatDate('2026-05-08T00:00:00Z')).not.toBe('—');
+  });
+});
+
+describe('formatDuration', () => {
+  it('returns a dash for null/undefined/negative', () => {
+    expect(formatDuration(null)).toBe('—');
+    expect(formatDuration(undefined)).toBe('—');
+    expect(formatDuration(-1)).toBe('—');
+  });
+
+  it('returns seconds for sub-minute durations', () => {
+    expect(formatDuration(5_000)).toBe('5s');
+    expect(formatDuration(45_000)).toBe('45s');
+  });
+
+  it('returns minutes:seconds for under-an-hour', () => {
+    expect(formatDuration(60_000)).toBe('1m 00s');
+    expect(formatDuration(95_000)).toBe('1m 35s');
+    expect(formatDuration(30 * 60_000)).toBe('30m 00s');
+  });
+
+  it('returns hours:minutes for hour-plus durations', () => {
+    expect(formatDuration(60 * 60_000)).toBe('1h 00m');
+    expect(formatDuration(2 * 60 * 60_000 + 5 * 60_000)).toBe('2h 05m');
   });
 });

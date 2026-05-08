@@ -7,6 +7,8 @@ import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { RecurrencePicker, describeRecurrence } from '../components/RecurrencePicker';
 import { StatusBadge } from '../components/StatusBadge';
+import { TaskTimer } from '../components/TaskTimer';
+import { timeTrackingApi, type TimeEntry } from '../api/time-tracking';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
@@ -25,6 +27,8 @@ export function TaskDetailPage() {
     dependsOn: [],
     blocks: [],
   });
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [activeTimer, setActiveTimer] = useState<TimeEntry | null>(null);
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -38,12 +42,16 @@ export function TaskDetailPage() {
       dependenciesApi
         .listForTask(id)
         .catch(() => ({ dependsOn: [], blocks: [] }) as TaskDependencies),
+      timeTrackingApi.listForTask(id).catch(() => [] as TimeEntry[]),
+      timeTrackingApi.active().catch(() => null),
     ])
-      .then(([t, c, atts, deps]) => {
+      .then(([t, c, atts, deps, entries, active]) => {
         setTask(t);
         setComments(c);
         setAttachments(atts);
         setDependencies(deps);
+        setTimeEntries(entries);
+        setActiveTimer(active);
       })
       .catch((err) => setError(err.message));
   }, [id]);
@@ -177,6 +185,13 @@ export function TaskDetailPage() {
           />
         </div>
       </div>
+
+      <TaskTimer
+        taskId={task.id}
+        entries={timeEntries}
+        active={activeTimer}
+        onChange={reload}
+      />
 
       {task.description ? (
         <div className="card">

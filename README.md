@@ -112,8 +112,17 @@ reachable at the URL in `tests/setupEnv.ts`. The provided
   removes many ids. Failures are reported per-id without aborting the
   batch. My Tasks gains row checkboxes, select-all, and a bulk action bar
   for triage.
+- **Phase 8 — Time tracking:** done. New `TimeEntry` model
+  (taskId/userId/startedAt/endedAt/durationMs/note). Endpoints for
+  start/stop, manual entry, edit, delete, current-active lookup, and a
+  manager-only weekly summary at `/api/time-entries/summary`. Server
+  enforces "one running timer per user" with a 409 on conflict and only
+  the entry author (or admin/manager) can edit/delete. TaskDetail gets a
+  live timer with elapsed seconds, total-logged-on-task, and an entry
+  log; Workload page gains a per-user "hours this week" column plus a
+  global stat card.
 
-185 tests across both workspaces (146 backend integration + 39 frontend
+197 tests across both workspaces (154 backend integration + 43 frontend
 unit). The platform runs against PostgreSQL via Docker Compose; production
 deployments swap the dev DB URL and either keep the heuristic AI / stub
 email defaults or set `AI_PROVIDER=anthropic` + `EMAIL_PROVIDER=smtp` with

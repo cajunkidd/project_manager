@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { projectsApi } from '../api/projects';
+import { timeTrackingApi, type WeeklySummaryRow } from '../api/time-tracking';
 import { workloadApi, type WorkloadRow } from '../api/workload';
 import type { Project } from '../types';
 
@@ -8,12 +9,19 @@ const OVERLOAD_THRESHOLD = 8;
 export function WorkloadPage() {
   const [rows, setRows] = useState<WorkloadRow[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [hoursByUser, setHoursByUser] = useState<Map<string, number>>(new Map());
   const [department, setDepartment] = useState('');
   const [projectId, setProjectId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     projectsApi.list().then(setProjects).catch(() => undefined);
+    timeTrackingApi
+      .weeklySummary()
+      .then((summary: WeeklySummaryRow[]) => {
+        setHoursByUser(new Map(summary.map((r) => [r.user.id, r.hours])));
+      })
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -26,10 +34,32 @@ export function WorkloadPage() {
       .catch((err) => setError(err.message));
   }, [department, projectId]);
 
+  const totalHours = useMemo(
+    () => Array.from(hoursByUser.values()).reduce((sum, h) => sum + h, 0),
+    [hoursByUser],
+  );
+
   return (
     <div className="col">
       <div className="page-header">
         <h1>Workload</h1>
+      </div>
+
+      <div className="grid cols-3">
+        <div className="stat">
+          <div className="label">Active users</div>
+          <div className="value">{rows.length}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Hours logged this week</div>
+          <div className="value">{totalHours.toFixed(1)}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Overloaded</div>
+          <div className="value">
+            {rows.filter((r) => r.open >= OVERLOAD_THRESHOLD || r.overdue >= 3).length}
+          </div>
+        </div>
       </div>
 
       <div className="card">
@@ -67,11 +97,13 @@ export function WorkloadPage() {
                 <th>Urgent</th>
                 <th>Due this week</th>
                 <th>Done this week</th>
+                <th>Hours this week</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => {
                 const overloaded = row.open >= OVERLOAD_THRESHOLD || row.overdue >= 3;
+                const hours = hoursByUser.get(row.user.id) ?? 0;
                 return (
                   <tr key={row.user.id} className={overloaded ? 'workload-warn' : undefined}>
                     <td>
@@ -85,6 +117,7 @@ export function WorkloadPage() {
                     <td>{row.urgent}</td>
                     <td>{row.dueThisWeek}</td>
                     <td>{row.completedThisWeek}</td>
+                    <td>{hours > 0 ? hours.toFixed(1) : '—'}</td>
                   </tr>
                 );
               })}

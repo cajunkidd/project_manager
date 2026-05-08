@@ -32,6 +32,10 @@ import { projectsRouter } from './modules/projects/projects.routes';
 import { reportsRouter } from './modules/reports/reports.routes';
 import { searchRouter } from './modules/search/search.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
+import {
+  taskTimeEntriesRouter,
+  timeEntriesRouter,
+} from './modules/time-tracking/time-tracking.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
 import { registerWebhookDispatcher } from './modules/webhooks/webhooks.dispatcher';
@@ -78,6 +82,8 @@ export function createApp() {
   app.use('/api/attachments', attachmentsRouter);
   app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
   app.use('/api/dependencies', dependenciesRouter);
+  app.use('/api/tasks/:id/time-entries', taskTimeEntriesRouter);
+  app.use('/api/time-entries', timeEntriesRouter);
 
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);
