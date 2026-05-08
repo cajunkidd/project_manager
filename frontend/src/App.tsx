@@ -16,6 +16,7 @@ import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { SearchPage } from './pages/SearchPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { TimelinePage } from './pages/TimelinePage';
@@ -84,6 +85,7 @@ export function App() {
         />
         <Route path="timeline" element={<TimelinePage />} />
         <Route path="ai/tasks" element={<AITasksPage />} />
+        <Route path="search" element={<SearchPage />} />
         <Route
           path="reports"
           element={

@@ -30,6 +30,7 @@ import { notificationsRouter } from './modules/notifications/notifications.route
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
 import { reportsRouter } from './modules/reports/reports.routes';
+import { searchRouter } from './modules/search/search.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
@@ -66,6 +67,7 @@ export function createApp() {
   app.use('/api/automations', automationsRouter);
   app.use('/api/reports', reportsRouter);
   app.use('/api/workload', workloadRouter);
+  app.use('/api/search', searchRouter);
   app.use('/api/ai', aiRouter);
   app.use('/api/projects/:id/ai', projectAiRouter);
   app.use('/api/email', emailRouter);

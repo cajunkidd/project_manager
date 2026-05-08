@@ -5,6 +5,7 @@ import { http } from '../api/client';
 import { dependenciesApi, type TaskDependencies } from '../api/dependencies';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { RecurrencePicker, describeRecurrence } from '../components/RecurrencePicker';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
@@ -150,6 +151,30 @@ export function TaskDetailPage() {
         <div className="subtle-card">
           <div className="muted">Assignee</div>
           <div>{task.assignedTo?.displayName ?? '—'}</div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div className="muted" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+              Repeats
+            </div>
+            <div style={{ fontSize: 14, marginTop: 2 }}>
+              {describeRecurrence(task.recurrence)}
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              When this task is marked done, the next occurrence is created automatically.
+            </div>
+          </div>
+          <RecurrencePicker
+            value={task.recurrence ?? null}
+            onChange={async (next) => {
+              if (!id) return;
+              const updated = await tasksApi.update(id, { recurrence: next });
+              setTask((prev) => (prev ? { ...prev, ...updated } : prev));
+            }}
+          />
         </div>
       </div>
 

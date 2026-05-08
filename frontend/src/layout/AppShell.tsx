@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { NotificationsBell } from '../components/NotificationsBell';
+import { SearchBox } from '../components/SearchBox';
 
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
@@ -48,11 +49,11 @@ export function AppShell() {
               </NavLink>
             ))
           : null}
-        <div className="footer">v0.5 — Phase 5</div>
+        <div className="footer">v0.7 — Phase 7</div>
       </aside>
       <div className="main">
         <header className="topbar">
-          <div className="muted">Internal Project Management</div>
+          <SearchBox />
           <div className="user-pill">
             <NotificationsBell />
             {user ? (

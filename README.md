@@ -99,8 +99,16 @@ reachable at the URL in `tests/setupEnv.ts`. The provided
   size cap, signed download). Task dependencies with cycle detection,
   surfaced in TaskDetail (depends-on / blocks) and as a count indicator on
   the Timeline.
+- **Phase 7 — Daily-use UX:** done. Recurring tasks: a JSON recurrence
+  rule on `Task` (interval / weekly presets), and when a recurring task
+  transitions to done the next occurrence is auto-created with the same
+  template and a forward-shifted due date — guarded against double-spawn
+  on done → in_progress → done flicker. Global search at `/api/search`
+  matches across tasks (title + description), projects (name + description),
+  and comments (body); UI is a debounced topbar search box with a results
+  dropdown plus a dedicated `/search` page.
 
-164 tests across both workspaces (130 backend integration + 34 frontend
+178 tests across both workspaces (139 backend integration + 39 frontend
 unit). The platform runs against PostgreSQL via Docker Compose; production
 deployments swap the dev DB URL and either keep the heuristic AI / stub
 email defaults or set `AI_PROVIDER=anthropic` + `EMAIL_PROVIDER=smtp` with

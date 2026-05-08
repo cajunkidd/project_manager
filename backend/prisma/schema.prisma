@@ -79,6 +79,7 @@ model Task {
   dueDate      DateTime?
   completedAt  DateTime?
   sortOrder    Int       @default(0)
+  recurrence   String?   // JSON-encoded rule, e.g. {"type":"interval","days":7}
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

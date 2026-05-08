@@ -3,6 +3,7 @@ import { prisma } from '../../db/prisma';
 import { eventBus } from '../../events/bus';
 import { NotFoundError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
+import { nextOccurrence, parseRecurrence } from './recurrence';
 
 export interface TaskFilters {
   status?: string;
@@ -25,6 +26,7 @@ export interface CreateTaskInput {
   startDate?: Date | null;
   dueDate?: Date | null;
   sortOrder?: number;
+  recurrence?: string | null;
 }
 
 export type UpdateTaskInput = Partial<CreateTaskInput> & {
@@ -154,6 +156,54 @@ export const tasksService = {
         toStatus: updated.status,
         actorId: userId ?? null,
       });
+    }
+
+    // Completion-driven recurrence: when a recurring task moves to done,
+    // spawn its next occurrence. Skip if the task has already spawned one
+    // (in case the user toggles done → in_progress → done).
+    if (
+      before.status !== 'done' &&
+      updated.status === 'done' &&
+      updated.recurrence &&
+      !updated.parentTaskId
+    ) {
+      const rule = parseRecurrence(updated.recurrence);
+      if (rule) {
+        const baseDue = updated.dueDate ?? updated.completedAt ?? new Date();
+        const newDueDate = nextOccurrence(rule, baseDue);
+        const alreadySpawned = await prisma.task.findFirst({
+          where: {
+            title: updated.title,
+            recurrence: updated.recurrence,
+            createdAt: { gte: new Date(Date.now() - 5_000) },
+            id: { not: updated.id },
+          },
+        });
+        if (!alreadySpawned) {
+          await prisma.task.create({
+            data: {
+              projectId: updated.projectId,
+              parentTaskId: null,
+              title: updated.title,
+              description: updated.description,
+              status: 'to_do',
+              priority: updated.priority,
+              assignedToId: updated.assignedToId,
+              createdById: userId ?? updated.createdById,
+              startDate: null,
+              dueDate: newDueDate,
+              recurrence: updated.recurrence,
+            },
+          });
+          await activityService.log({
+            entityType: 'task',
+            entityId: id,
+            action: 'recurrence_spawned',
+            newValue: { dueDate: newDueDate.toISOString() },
+            userId: userId ?? null,
+          });
+        }
+      }
     }
     if (
       updated.assignedToId &&

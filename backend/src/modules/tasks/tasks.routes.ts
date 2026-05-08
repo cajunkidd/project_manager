@@ -32,6 +32,7 @@ const createSchema = z.object({
   startDate: isoDate.nullable().optional(),
   dueDate: isoDate.nullable().optional(),
   sortOrder: z.number().int().optional(),
+  recurrence: z.string().nullable().optional(),
 });
 
 const updateSchema = createSchema.partial().extend({

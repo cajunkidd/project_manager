@@ -55,6 +55,7 @@ export interface Task {
   dueDate: string | null;
   completedAt: string | null;
   sortOrder: number;
+  recurrence: string | null;
   createdAt: string;
   updatedAt: string;
   assignedTo?: { id: string; displayName: string; email: string } | null;
