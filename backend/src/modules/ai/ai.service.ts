@@ -1,10 +1,6 @@
 import { prisma } from '../../db/prisma';
 import { NotFoundError } from '../../utils/errors';
-import {
-  extractTasksFromText,
-  scoreProjectRisk,
-  summarizeProject,
-} from './ai.heuristic';
+import { getAIProvider } from './ai.providers';
 import type { ProjectAIContext } from './ai.types';
 
 async function loadContext(projectId: string): Promise<ProjectAIContext> {
@@ -56,15 +52,19 @@ async function loadContext(projectId: string): Promise<ProjectAIContext> {
 export const aiService = {
   async summarizeProject(projectId: string) {
     const ctx = await loadContext(projectId);
-    return summarizeProject(ctx);
+    return getAIProvider().summarizeProject(ctx);
   },
 
   async scoreProjectRisk(projectId: string) {
     const ctx = await loadContext(projectId);
-    return scoreProjectRisk(ctx);
+    return getAIProvider().scoreProjectRisk(ctx);
   },
 
-  extractTasks(text: string) {
-    return extractTasksFromText(text);
+  async extractTasks(text: string) {
+    return getAIProvider().extractTasks(text);
+  },
+
+  providerName(): string {
+    return getAIProvider().name;
   },
 };

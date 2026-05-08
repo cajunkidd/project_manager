@@ -88,9 +88,20 @@ reachable at the URL in `tests/setupEnv.ts`. The provided
   (HMAC-SHA256) JSON payloads with delivery records (status, attempts,
   response body) for debugging. Admin Settings page provides token + webhook
   management with one-time secret reveal.
+- **Phase 6 — Productionization:** done. Postgres replaces SQLite (proper
+  Prisma migrations + docker-compose + CI service container). Real provider
+  adapters wired behind the AI and email seams: Anthropic SDK
+  (`AI_PROVIDER=anthropic`, `claude-opus-4-7`, adaptive thinking, JSON
+  schema-constrained output) for AI summary + task extraction; nodemailer
+  SMTP (`EMAIL_PROVIDER=smtp`) for outbound mail. Webhook delivery now
+  retries with exponential backoff and records the attempt count. File
+  attachments on tasks/projects (multer + local upload root, MIME allowlist,
+  size cap, signed download). Task dependencies with cycle detection,
+  surfaced in TaskDetail (depends-on / blocks) and as a count indicator on
+  the Timeline.
 
-The whole platform is implemented and tested — 156 tests across both
-workspaces (122 backend integration + 34 frontend unit).
-
-The schema swaps to PostgreSQL by changing `provider` in
-`backend/prisma/schema.prisma` and updating `DATABASE_URL`.
+164 tests across both workspaces (130 backend integration + 34 frontend
+unit). The platform runs against PostgreSQL via Docker Compose; production
+deployments swap the dev DB URL and either keep the heuristic AI / stub
+email defaults or set `AI_PROVIDER=anthropic` + `EMAIL_PROVIDER=smtp` with
+the right credentials.

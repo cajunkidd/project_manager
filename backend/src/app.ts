@@ -4,6 +4,15 @@ import { errorHandler } from './middleware/errorHandler';
 import { aiRouter, projectAiRouter } from './modules/ai/ai.routes';
 import { apiTokensRouter } from './modules/api-tokens/api-tokens.routes';
 import { publicApiRouter } from './modules/api-tokens/public.routes';
+import {
+  attachmentsRouter,
+  projectAttachmentsRouter,
+  taskAttachmentsRouter,
+} from './modules/attachments/attachments.routes';
+import {
+  dependenciesRouter,
+  taskDependenciesRouter,
+} from './modules/dependencies/dependencies.routes';
 import { automationsRouter } from './modules/automations/automations.routes';
 import { registerAutomationEngine } from './modules/automations/automations.engine';
 import { authRouter } from './modules/auth/auth.routes';
@@ -13,6 +22,7 @@ import {
   taskCommentsRouter,
 } from './modules/comments/comments.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
+import { configureEmailProvider } from './modules/email/email.config';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
@@ -27,6 +37,7 @@ import { registerWebhookDispatcher } from './modules/webhooks/webhooks.dispatche
 import { workloadRouter } from './modules/workload/workload.routes';
 
 export function createApp() {
+  configureEmailProvider();
   registerNotificationListeners();
   registerAutomationEngine();
   registerEmailListeners();
@@ -60,6 +71,11 @@ export function createApp() {
   app.use('/api/email', emailRouter);
   app.use('/api/api-tokens', apiTokensRouter);
   app.use('/api/webhooks', webhooksRouter);
+  app.use('/api/tasks/:id/attachments', taskAttachmentsRouter);
+  app.use('/api/projects/:id/attachments', projectAttachmentsRouter);
+  app.use('/api/attachments', attachmentsRouter);
+  app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
+  app.use('/api/dependencies', dependenciesRouter);
 
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);

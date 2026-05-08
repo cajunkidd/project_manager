@@ -18,7 +18,14 @@ aiRouter.post(
   '/extract-tasks',
   asyncHandler(async (req, res) => {
     const { text } = extractSchema.parse(req.body);
-    res.json({ tasks: aiService.extractTasks(text) });
+    res.json({ tasks: await aiService.extractTasks(text) });
+  }),
+);
+
+aiRouter.get(
+  '/provider',
+  asyncHandler(async (_req, res) => {
+    res.json({ provider: aiService.providerName() });
   }),
 );
 

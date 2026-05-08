@@ -1,28 +1,48 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { attachmentsApi, type AttachmentRecord } from '../api/attachments';
 import { http } from '../api/client';
+import { dependenciesApi, type TaskDependencies } from '../api/dependencies';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentRecord[]>([]);
+  const [dependencies, setDependencies] = useState<TaskDependencies>({
+    dependsOn: [],
+    blocks: [],
+  });
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const reload = useCallback(() => {
     if (!id) return;
     Promise.all([
       tasksApi.get(id),
       http.get<Comment[]>(`/tasks/${id}/comments`),
+      attachmentsApi.listForTask(id).catch(() => [] as AttachmentRecord[]),
+      dependenciesApi
+        .listForTask(id)
+        .catch(() => ({ dependsOn: [], blocks: [] }) as TaskDependencies),
     ])
-      .then(([t, c]) => {
+      .then(([t, c, atts, deps]) => {
         setTask(t);
         setComments(c);
+        setAttachments(atts);
+        setDependencies(deps);
       })
       .catch((err) => setError(err.message));
   }, [id]);
@@ -30,6 +50,42 @@ export function TaskDetailPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  async function onFileChosen(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!id || !file) return;
+    setUploading(true);
+    try {
+      await attachmentsApi.uploadToTask(id, file);
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  async function removeAttachment(attachmentId: string) {
+    if (!window.confirm('Delete this attachment?')) return;
+    await attachmentsApi.remove(attachmentId);
+    reload();
+  }
+
+  async function addDependency(dependsOnTaskId: string) {
+    if (!id) return;
+    try {
+      await dependenciesApi.add(id, dependsOnTaskId);
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add dependency');
+    }
+  }
+
+  async function removeDependency(depId: string) {
+    await dependenciesApi.remove(depId);
+    reload();
+  }
 
   async function changeStatus(status: TaskStatus) {
     if (!id) return;
@@ -119,6 +175,116 @@ export function TaskDetailPage() {
       ) : null}
 
       <div className="card">
+        <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Attachments</h2>
+        {attachments.length === 0 ? (
+          <div className="muted">No attachments yet.</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Size</th>
+                <th>Uploaded by</th>
+                <th>When</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {attachments.map((att) => (
+                <tr key={att.id}>
+                  <td>
+                    <a href={attachmentsApi.downloadUrl(att.id)} target="_blank" rel="noreferrer">
+                      {att.fileName}
+                    </a>
+                    <div className="muted" style={{ fontSize: 11 }}>
+                      {att.mimeType}
+                    </div>
+                  </td>
+                  <td className="muted">{formatBytes(att.fileSize)}</td>
+                  <td className="muted">{att.uploadedBy?.displayName ?? '—'}</td>
+                  <td className="muted">{formatDate(att.createdAt)}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      type="button"
+                      className="link"
+                      style={{ color: 'var(--danger)' }}
+                      onClick={() => removeAttachment(att.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+          <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+            {uploading ? 'Uploading…' : 'Upload file'}
+            <input
+              type="file"
+              onChange={onFileChosen}
+              disabled={uploading}
+              style={{ display: 'none' }}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Dependencies</h2>
+        <div className="ai-grid">
+          <div>
+            <div className="muted" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+              This task depends on
+            </div>
+            {dependencies.dependsOn.length === 0 ? (
+              <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+                None.
+              </div>
+            ) : (
+              <ul className="ai-bullets">
+                {dependencies.dependsOn.map((edge) => (
+                  <li key={edge.id}>
+                    <Link to={`/tasks/${edge.dependsOnTask.id}`}>{edge.dependsOnTask.title}</Link>{' '}
+                    <StatusBadge status={edge.dependsOnTask.status} />{' '}
+                    <button
+                      type="button"
+                      className="link"
+                      style={{ color: 'var(--danger)' }}
+                      onClick={() => removeDependency(edge.id)}
+                    >
+                      remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <div className="muted" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+              Blocks
+            </div>
+            {dependencies.blocks.length === 0 ? (
+              <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+                None.
+              </div>
+            ) : (
+              <ul className="ai-bullets">
+                {dependencies.blocks.map((edge) => (
+                  <li key={edge.id}>
+                    <Link to={`/tasks/${edge.task.id}`}>{edge.task.title}</Link>{' '}
+                    <StatusBadge status={edge.task.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+        <DependencyPicker projectId={task.projectId} currentTaskId={task.id} onAdd={addDependency} />
+      </div>
+
+      <div className="card">
         <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Comments</h2>
         {comments.length === 0 ? (
           <div className="muted">No comments yet.</div>
@@ -151,6 +317,54 @@ export function TaskDetailPage() {
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function DependencyPicker({
+  projectId,
+  currentTaskId,
+  onAdd,
+}: {
+  projectId: string | null;
+  currentTaskId: string;
+  onAdd: (taskId: string) => Promise<void>;
+}) {
+  const [candidates, setCandidates] = useState<Task[]>([]);
+  const [selected, setSelected] = useState('');
+
+  useEffect(() => {
+    tasksApi
+      .list(projectId ? { projectId } : {})
+      .then((tasks) => setCandidates(tasks.filter((t) => t.id !== currentTaskId)))
+      .catch(() => setCandidates([]));
+  }, [projectId, currentTaskId]);
+
+  return (
+    <div className="row" style={{ marginTop: 12, gap: 8 }}>
+      <select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        style={{ maxWidth: 360 }}
+      >
+        <option value="">Add a dependency on…</option>
+        {candidates.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.title}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        className="btn"
+        disabled={!selected}
+        onClick={async () => {
+          await onAdd(selected);
+          setSelected('');
+        }}
+      >
+        Add
+      </button>
     </div>
   );
 }

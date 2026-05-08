@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { dependenciesApi } from '../api/dependencies';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
 import { StatusBadge } from '../components/StatusBadge';
@@ -65,6 +66,7 @@ export function TimelinePage() {
   const projectId = params.get('projectId') ?? '';
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [depsByTask, setDepsByTask] = useState<Map<string, number>>(new Map());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,11 +76,26 @@ export function TimelinePage() {
   useEffect(() => {
     if (!projectId) {
       setTasks([]);
+      setDepsByTask(new Map());
       return;
     }
     tasksApi
       .list({ projectId })
-      .then(setTasks)
+      .then(async (loaded) => {
+        setTasks(loaded);
+        const counts = new Map<string, number>();
+        await Promise.all(
+          loaded.map(async (t) => {
+            try {
+              const deps = await dependenciesApi.listForTask(t.id);
+              counts.set(t.id, deps.dependsOn.length);
+            } catch {
+              counts.set(t.id, 0);
+            }
+          }),
+        );
+        setDepsByTask(counts);
+      })
       .catch((err) => setError(err.message));
   }, [projectId]);
 
@@ -148,6 +165,15 @@ export function TimelinePage() {
                         <span style={{ marginLeft: 6 }}>
                           <StatusBadge status={task.status} />
                         </span>
+                        {(depsByTask.get(task.id) ?? 0) > 0 ? (
+                          <span
+                            className="muted"
+                            style={{ marginLeft: 6, fontSize: 11 }}
+                            title="Depends on other tasks"
+                          >
+                            ↳ {depsByTask.get(task.id)}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="gantt-track">
                         {bar ? (

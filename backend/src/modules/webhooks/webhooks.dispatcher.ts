@@ -4,6 +4,9 @@ import { webhooksService, WEBHOOK_EVENTS, type WebhookEvent } from './webhooks.s
 
 let registered = false;
 
+const MAX_ATTEMPTS = Number(process.env.WEBHOOK_MAX_ATTEMPTS ?? 3);
+const BASE_BACKOFF_MS = Number(process.env.WEBHOOK_BASE_BACKOFF_MS ?? 250);
+
 function buildPayload(event: DomainEvent): Record<string, unknown> {
   switch (event.type) {
     case 'task.created':
@@ -29,11 +32,17 @@ function buildPayload(event: DomainEvent): Record<string, unknown> {
   }
 }
 
-async function deliver(
-  subscription: { id: string; url: string; secret: string },
+interface DeliveryResult {
+  status: 'success' | 'failed';
+  statusCode: number | null;
+  responseBody: string | null;
+}
+
+async function attemptDelivery(
+  subscription: { url: string; secret: string },
   eventType: WebhookEvent,
   body: string,
-): Promise<{ status: 'success' | 'failed'; statusCode: number | null; responseBody: string | null }> {
+): Promise<DeliveryResult> {
   try {
     const signature = webhooksService.signPayload(subscription.secret, body);
     const res = await fetch(subscription.url, {
@@ -60,6 +69,50 @@ async function deliver(
   }
 }
 
+function backoffDelay(attempt: number): number {
+  // 250ms, 500ms, 1s, 2s, ...
+  return BASE_BACKOFF_MS * 2 ** (attempt - 1);
+}
+
+async function deliverWithRetry(
+  subscription: { id: string; url: string; secret: string },
+  eventType: WebhookEvent,
+  body: string,
+): Promise<void> {
+  let lastResult: DeliveryResult | undefined;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+    lastResult = await attemptDelivery(subscription, eventType, body);
+    if (lastResult.status === 'success') {
+      await prisma.webhookDelivery.create({
+        data: {
+          subscriptionId: subscription.id,
+          eventType,
+          payload: body,
+          status: 'success',
+          statusCode: lastResult.statusCode,
+          responseBody: lastResult.responseBody,
+          attempts: attempt,
+        },
+      });
+      return;
+    }
+    if (attempt < MAX_ATTEMPTS) {
+      await new Promise((r) => setTimeout(r, backoffDelay(attempt)));
+    }
+  }
+  await prisma.webhookDelivery.create({
+    data: {
+      subscriptionId: subscription.id,
+      eventType,
+      payload: body,
+      status: 'failed',
+      statusCode: lastResult?.statusCode ?? null,
+      responseBody: lastResult?.responseBody ?? null,
+      attempts: MAX_ATTEMPTS,
+    },
+  });
+}
+
 export function registerWebhookDispatcher(): void {
   if (registered) return;
   registered = true;
@@ -69,22 +122,7 @@ export function registerWebhookDispatcher(): void {
       const subs = await webhooksService.findActiveForEvent(eventType);
       if (!subs.length) return;
       const body = JSON.stringify(buildPayload(event));
-      await Promise.all(
-        subs.map(async (sub) => {
-          const result = await deliver(sub, eventType, body);
-          await prisma.webhookDelivery.create({
-            data: {
-              subscriptionId: sub.id,
-              eventType,
-              payload: body,
-              status: result.status,
-              statusCode: result.statusCode,
-              responseBody: result.responseBody,
-              attempts: 1,
-            },
-          });
-        }),
-      );
+      await Promise.all(subs.map((sub) => deliverWithRetry(sub, eventType, body)));
     });
   }
 }
