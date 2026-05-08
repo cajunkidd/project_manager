@@ -1,27 +1,26 @@
 import type { ReactElement } from 'react';
+import { projectStatusLabel, taskStatusLabel } from '../utils/format';
 
-const LABELS: Record<string, string> = {
-  not_started: 'Not Started',
-  active: 'Active',
-  on_hold: 'On Hold',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-  backlog: 'Backlog',
-  to_do: 'To Do',
-  in_progress: 'In Progress',
-  waiting: 'Waiting',
-  review: 'Review',
-  done: 'Done',
-};
+const TASK_STATUSES = new Set([
+  'backlog',
+  'to_do',
+  'in_progress',
+  'waiting',
+  'review',
+  'done',
+  'cancelled',
+]);
 
 export interface StatusBadgeProps {
   status: string;
 }
 
 export function StatusBadge({ status }: StatusBadgeProps): ReactElement {
-  const label = LABELS[status] ?? status;
+  const label = TASK_STATUSES.has(status)
+    ? taskStatusLabel(status)
+    : projectStatusLabel(status);
   return (
-    <span data-testid="status-badge" data-status={status}>
+    <span data-testid="status-badge" data-status={status} className={`badge status-${status}`}>
       {label}
     </span>
   );

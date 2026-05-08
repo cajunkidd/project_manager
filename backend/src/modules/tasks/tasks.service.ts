@@ -1,0 +1,171 @@
+import type { Prisma } from '@prisma/client';
+import { prisma } from '../../db/prisma';
+import { NotFoundError } from '../../utils/errors';
+import { activityService } from '../activity/activity.service';
+
+export interface TaskFilters {
+  status?: string;
+  assignedToId?: string;
+  priority?: string;
+  projectId?: string;
+  parentTaskId?: string | null;
+  dueBefore?: Date;
+  search?: string;
+}
+
+export interface CreateTaskInput {
+  projectId?: string | null;
+  parentTaskId?: string | null;
+  title: string;
+  description?: string | null;
+  status?: string;
+  priority?: string;
+  assignedToId?: string | null;
+  startDate?: Date | null;
+  dueDate?: Date | null;
+  sortOrder?: number;
+}
+
+export type UpdateTaskInput = Partial<CreateTaskInput> & {
+  completedAt?: Date | null;
+};
+
+export interface ReorderInput {
+  id: string;
+  status: string;
+  sortOrder: number;
+}
+
+const TASK_INCLUDE = {
+  assignedTo: { select: { id: true, displayName: true, email: true } },
+  project: { select: { id: true, name: true } },
+} as const;
+
+export const tasksService = {
+  async list(filters: TaskFilters = {}) {
+    const where: Prisma.TaskWhereInput = {};
+    if (filters.status) where.status = filters.status;
+    if (filters.assignedToId) where.assignedToId = filters.assignedToId;
+    if (filters.priority) where.priority = filters.priority;
+    if (filters.projectId) where.projectId = filters.projectId;
+    if (filters.parentTaskId !== undefined) where.parentTaskId = filters.parentTaskId;
+    if (filters.dueBefore) where.dueDate = { lte: filters.dueBefore };
+    if (filters.search) {
+      where.OR = [
+        { title: { contains: filters.search } },
+        { description: { contains: filters.search } },
+      ];
+    }
+    return prisma.task.findMany({
+      where,
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      include: TASK_INCLUDE,
+    });
+  },
+
+  async getById(id: string) {
+    const task = await prisma.task.findUnique({
+      where: { id },
+      include: {
+        ...TASK_INCLUDE,
+        subtasks: { include: TASK_INCLUDE },
+      },
+    });
+    if (!task) throw new NotFoundError('Task not found');
+    return task;
+  },
+
+  async create(input: CreateTaskInput, userId?: string) {
+    const task = await prisma.task.create({
+      data: { ...input, createdById: userId ?? null },
+      include: TASK_INCLUDE,
+    });
+    await activityService.log({
+      entityType: 'task',
+      entityId: task.id,
+      action: 'created',
+      newValue: { title: task.title, status: task.status, priority: task.priority },
+      userId: userId ?? null,
+    });
+    return task;
+  },
+
+  async update(id: string, input: UpdateTaskInput, userId?: string) {
+    const before = await this.getById(id);
+
+    if (input.status === 'done' && !before.completedAt && input.completedAt === undefined) {
+      input.completedAt = new Date();
+    }
+    if (input.status && input.status !== 'done' && before.completedAt) {
+      input.completedAt = null;
+    }
+
+    const updated = await prisma.task.update({
+      where: { id },
+      data: input,
+      include: TASK_INCLUDE,
+    });
+    await activityService.log({
+      entityType: 'task',
+      entityId: id,
+      action: 'updated',
+      oldValue: {
+        status: before.status,
+        priority: before.priority,
+        assignedToId: before.assignedToId,
+        title: before.title,
+      },
+      newValue: {
+        status: updated.status,
+        priority: updated.priority,
+        assignedToId: updated.assignedToId,
+        title: updated.title,
+      },
+      userId: userId ?? null,
+    });
+    return updated;
+  },
+
+  async updateStatus(id: string, status: string, userId?: string) {
+    return this.update(id, { status }, userId);
+  },
+
+  async remove(id: string, userId?: string) {
+    await this.getById(id);
+    await prisma.task.delete({ where: { id } });
+    await activityService.log({
+      entityType: 'task',
+      entityId: id,
+      action: 'deleted',
+      userId: userId ?? null,
+    });
+  },
+
+  async reorder(items: ReorderInput[], userId?: string) {
+    await prisma.$transaction(
+      items.map((item) =>
+        prisma.task.update({
+          where: { id: item.id },
+          data: { status: item.status, sortOrder: item.sortOrder },
+        }),
+      ),
+    );
+    await Promise.all(
+      items.map((item) =>
+        activityService.log({
+          entityType: 'task',
+          entityId: item.id,
+          action: 'reordered',
+          newValue: { status: item.status, sortOrder: item.sortOrder },
+          userId: userId ?? null,
+        }),
+      ),
+    );
+    return { updated: items.length };
+  },
+
+  async listActivity(taskId: string) {
+    await this.getById(taskId);
+    return activityService.listForEntity('task', taskId);
+  },
+};
