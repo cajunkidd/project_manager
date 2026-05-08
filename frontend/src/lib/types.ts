@@ -25,6 +25,7 @@ export interface User {
   role: Role;
   department: string | null;
   isActive: boolean;
+  emailNotificationsEnabled?: boolean;
 }
 
 export interface Project {

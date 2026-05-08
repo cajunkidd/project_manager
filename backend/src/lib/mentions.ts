@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import { notify } from "./notify";
+import { appLink, sendEmailToUser } from "./email";
 
 const MENTION_RE = /@([a-zA-Z0-9._-]+)/g;
 
@@ -34,6 +35,10 @@ export async function notifyMentions(args: {
   const tokens = extractMentionTokens(args.body);
   if (tokens.length === 0) return;
   const users = await resolveMentionsToUsers(tokens);
+  const link =
+    args.entityType === "project"
+      ? appLink(`/projects/${args.entityId}`)
+      : appLink(`/my-tasks?task=${args.entityId}`);
   for (const u of users) {
     if (u.id === args.authorId) continue;
     await notify({
@@ -43,6 +48,10 @@ export async function notifyMentions(args: {
       type: "mention",
       entityType: args.entityType,
       entityId: args.entityId,
+    });
+    void sendEmailToUser(u.id, {
+      subject: args.title,
+      text: `${args.body}\n\n${link}`,
     });
   }
 }

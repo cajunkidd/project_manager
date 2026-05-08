@@ -78,6 +78,7 @@ npm run dev:frontend
 | API tokens | `/api/api-tokens` issue/revoke; tokens are `pm_…`, hashed at rest, shown once at creation. |
 | External API | `/api/v1/{tasks,projects}` token-authed surface (Bearer auth) for external systems. |
 | Outbound webhooks | `/api/webhooks` subscribe URLs to events (`task_created`, `task_updated`, `project_created`, `project_updated`, `form_submitted`). Bodies signed with HMAC-SHA256 in `X-PM-Signature`; `X-PM-Event` carries the event type. Per-subscription delivery log. |
+| Email | Outbound only (Phase 5). Set `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM`/`APP_BASE_URL`. Sends on task assignment and `@mention`; daily digest scheduler at `DAILY_DIGEST_HOUR` (default 8) emails each user a summary of overdue and due-this-week tasks. Per-user opt-out via `emailNotificationsEnabled` toggle in Settings. |
 | Deep links | `?task=<id>` opens the task drawer anywhere; the bell deep-links into it |
 
 There is **no auth yet**. The frontend uses a simple "acting as" user switcher

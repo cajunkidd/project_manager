@@ -6,6 +6,7 @@ import { logActivity } from "../lib/activity";
 import { notify } from "../lib/notify";
 import { runAutomations } from "../lib/automation";
 import { dispatchWebhook } from "../lib/webhooks";
+import { appLink, sendEmailToUser } from "../lib/email";
 
 export const tasksRouter = Router();
 
@@ -135,6 +136,10 @@ tasksRouter.post("/", async (req, res) => {
       entityType: "task",
       entityId: task.id,
     });
+    void sendEmailToUser(task.assignedToId, {
+      subject: `Assigned: ${task.title}`,
+      text: `You were assigned a new task.\n\n${appLink(`/my-tasks?task=${task.id}`)}`,
+    });
   }
   await runAutomations({ trigger: "task_created", task });
   dispatchWebhook("task_created", { task });
@@ -175,6 +180,10 @@ tasksRouter.patch("/:id", async (req, res) => {
       type: "task_assigned",
       entityType: "task",
       entityId: task.id,
+    });
+    void sendEmailToUser(task.assignedToId, {
+      subject: `Assigned: ${task.title}`,
+      text: `You were assigned this task.\n\n${appLink(`/my-tasks?task=${task.id}`)}`,
     });
   }
   if (data.status && data.status !== before.status) {

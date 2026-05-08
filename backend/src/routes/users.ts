@@ -11,6 +11,7 @@ const upsertSchema = z.object({
   role: z.enum(["admin", "manager", "user", "viewer"]).optional(),
   department: z.string().optional().nullable(),
   isActive: z.boolean().optional(),
+  emailNotificationsEnabled: z.boolean().optional(),
 });
 
 usersRouter.get("/", async (_req, res) => {

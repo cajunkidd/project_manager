@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import type { Role, User } from "../lib/types";
+import { getCurrentUserId } from "../lib/currentUser";
 
 const ROLES: Role[] = ["admin", "manager", "user", "viewer"];
 
@@ -34,7 +35,9 @@ export default function Settings() {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-semibold">Settings · Users</h1>
+      <h1 className="text-2xl font-semibold">Settings</h1>
+
+      <MyPreferences users={users} />
 
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <h2 className="text-sm font-semibold text-slate-700 mb-3">Add user</h2>
@@ -87,6 +90,7 @@ export default function Settings() {
               <th className="text-left py-1 font-medium">Email</th>
               <th className="text-left py-1 font-medium">Role</th>
               <th className="text-left py-1 font-medium">Department</th>
+              <th className="text-left py-1 font-medium">Email notify</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -96,11 +100,51 @@ export default function Settings() {
                 <td className="py-1.5 text-slate-600">{u.email}</td>
                 <td className="py-1.5">{u.role}</td>
                 <td className="py-1.5 text-slate-600">{u.department ?? "—"}</td>
+                <td className="py-1.5">
+                  {u.emailNotificationsEnabled === false ? (
+                    <span className="text-slate-400">off</span>
+                  ) : (
+                    <span className="text-emerald-700">on</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
     </div>
+  );
+}
+
+function MyPreferences({ users }: { users: User[] }) {
+  const qc = useQueryClient();
+  const [me, setMe] = useState<User | null>(null);
+  useEffect(() => {
+    const id = getCurrentUserId();
+    setMe(users.find((u) => u.id === id) ?? null);
+  }, [users]);
+
+  const update = useMutation({
+    mutationFn: (patch: Partial<User>) =>
+      me ? api.patch(`/users/${me.id}`, patch) : Promise.resolve(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+
+  if (!me) return null;
+  return (
+    <section className="bg-white border border-slate-200 rounded-lg p-4 space-y-2">
+      <h2 className="text-sm font-semibold text-slate-700">My preferences</h2>
+      <div className="text-xs text-slate-500">{me.displayName} · {me.email}</div>
+      <label className="flex items-center gap-2 text-sm pt-1">
+        <input
+          type="checkbox"
+          checked={me.emailNotificationsEnabled !== false}
+          onChange={(e) =>
+            update.mutate({ emailNotificationsEnabled: e.target.checked })
+          }
+        />
+        Send email notifications (assignments, mentions, daily digest)
+      </label>
+    </section>
   );
 }
