@@ -1,0 +1,84 @@
+# Internal Project Manager
+
+Foundation scaffold for the internal project management application described in
+[`project_management_app_claude_code_roadmap.md`](./project_management_app_claude_code_roadmap.md).
+
+This is the **Phase 0 / Phase 1 MVP slice**: users, projects, tasks (with subtasks),
+comments, activity logs, a basic dashboard, and a Kanban board.
+
+## Stack
+
+- **Backend** — Node.js, Express, TypeScript, Prisma, PostgreSQL, Zod
+- **Frontend** — React (Vite), TypeScript, Tailwind CSS, React Router, TanStack Query
+- **Monorepo** — npm workspaces
+
+## Project layout
+
+```
+backend/    Express + Prisma API
+frontend/   Vite + React + Tailwind app
+```
+
+## Prerequisites
+
+- Node.js 20+
+- PostgreSQL 14+ (local or remote)
+
+## Setup
+
+```bash
+# from repo root
+npm install
+
+# configure backend env
+cp backend/.env.example backend/.env
+# edit DATABASE_URL to point at your Postgres
+
+# generate Prisma client and apply migrations
+npm --workspace backend run db:generate
+npm --workspace backend run db:migrate -- --name init
+
+# seed sample IT department data
+npm --workspace backend run db:seed
+```
+
+## Run
+
+```bash
+# both apps in parallel (Vite proxies /api -> http://localhost:4000)
+npm run dev
+
+# or individually
+npm run dev:backend
+npm run dev:frontend
+```
+
+- Frontend: http://localhost:5173
+- Backend:  http://localhost:4000  (health: `/health`)
+
+## What's implemented
+
+| Area | Endpoints / UI |
+|---|---|
+| Users | CRUD (`/api/users`), Settings page |
+| Projects | CRUD + filters (`/api/projects`), list, detail |
+| Tasks | CRUD + status / reorder (`/api/tasks`), subtasks, filters |
+| Comments | Per-task and per-project (`/api/comments`) |
+| Activity log | Auto-recorded on create/update/delete; per-project view |
+| Dashboard | `/api/dashboard/me`, `/api/dashboard/manager` |
+| Kanban Board | Drag-and-drop status changes, project filter, overdue highlighting |
+
+There is **no auth yet**. The frontend uses a simple "acting as" user switcher
+(persisted in `localStorage`) so the dashboard and write actions can attribute
+the current user. SSO (Microsoft Entra) is on the Phase 5 roadmap.
+
+## Roadmap
+
+See [`project_management_app_claude_code_roadmap.md`](./project_management_app_claude_code_roadmap.md).
+Next milestone candidates per the roadmap:
+
+- Notifications (Phase 2)
+- Intake forms + automation engine (Phase 2)
+- Reporting & workload screens (Phase 3)
+- Gantt / timeline (Phase 3)
+- AI summary, task extraction, risk score (Phase 4)
