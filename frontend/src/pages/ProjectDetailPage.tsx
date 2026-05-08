@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { RiskBadge } from '../components/RiskBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Project, Task, TaskStatus } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
@@ -11,15 +13,24 @@ export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [summary, setSummary] = useState<ProjectSummary | null>(null);
+  const [risk, setRisk] = useState<RiskScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
 
   const reload = useCallback(() => {
     if (!id) return;
-    Promise.all([projectsApi.get(id), projectsApi.tasks(id)])
-      .then(([p, ts]) => {
+    Promise.all([
+      projectsApi.get(id),
+      projectsApi.tasks(id),
+      aiApi.summarizeProject(id).catch(() => null),
+      aiApi.scoreProjectRisk(id).catch(() => null),
+    ])
+      .then(([p, ts, s, r]) => {
         setProject(p);
         setTasks(ts);
+        setSummary(s);
+        setRisk(r);
       })
       .catch((err) => setError(err.message));
   }, [id]);
@@ -44,10 +55,21 @@ export function ProjectDetailPage() {
             ← All projects
           </Link>
           <h1 style={{ margin: '4px 0 0' }}>{project.name}</h1>
+          {risk ? (
+            <div style={{ marginTop: 6 }}>
+              <RiskBadge risk={risk} />
+            </div>
+          ) : null}
         </div>
         <div className="row">
           <Link to={`/board?projectId=${project.id}`} className="btn btn-secondary">
             Open board
+          </Link>
+          <Link
+            to={`/timeline?projectId=${project.id}`}
+            className="btn btn-secondary"
+          >
+            Timeline
           </Link>
           <button className="btn" onClick={() => setShowNewTask((v) => !v)}>
             {showNewTask ? 'Cancel' : 'Add task'}
@@ -78,6 +100,47 @@ export function ProjectDetailPage() {
         <div className="card">
           <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Description</h2>
           <div style={{ whiteSpace: 'pre-wrap' }}>{project.description}</div>
+        </div>
+      ) : null}
+
+      {summary ? (
+        <div className="card ai-card">
+          <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>AI summary</h2>
+          <div className="ai-headline">{summary.headline}</div>
+          <div className="ai-grid" style={{ marginTop: 12 }}>
+            <SummarySection title="Recommended next steps" items={summary.recommendations} />
+            <SummarySection
+              title="Overdue"
+              items={summary.overdue}
+              empty="None overdue."
+            />
+            <SummarySection
+              title="Blockers"
+              items={summary.blockers}
+              empty="No blockers."
+            />
+            <SummarySection
+              title="Recently completed"
+              items={summary.completed}
+              empty="No tasks completed yet."
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {risk && risk.factors.length > 0 ? (
+        <div className="card ai-card">
+          <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Risk factors</h2>
+          <div className="muted" style={{ fontSize: 13 }}>
+            {risk.explanation}
+          </div>
+          <ul className="factor-list">
+            {risk.factors.map((f) => (
+              <li key={f.label}>
+                <span className="factor-impact">+{f.impact}</span> · {f.label} — {f.detail}
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
@@ -177,5 +240,34 @@ function NewTaskForm({ projectId, onCreated }: { projectId: string; onCreated: (
       </button>
       {error ? <div className="error">{error}</div> : null}
     </form>
+  );
+}
+
+function SummarySection({
+  title,
+  items,
+  empty,
+}: {
+  title: string;
+  items: string[];
+  empty?: string;
+}) {
+  return (
+    <div>
+      <div className="muted" style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.04 }}>
+        {title}
+      </div>
+      {items.length === 0 ? (
+        <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+          {empty ?? '—'}
+        </div>
+      ) : (
+        <ul className="ai-bullets">
+          {items.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -62,7 +62,14 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   overdue, projects-by-status, completion-by-week, avg-completion, blocked),
   manager workload screen with overload highlighting, per-project timeline
   view with status-aware bars.
-- **Phase 4+:** AI features and external integrations — not yet implemented.
+- **Phase 4 — AI features:** done. Provider-abstracted AI module with a
+  deterministic local heuristic baseline (no LLM key required). Endpoints:
+  per-project plain-language summary, project risk score (0–100 with
+  factor breakdown), and task extraction from pasted text. UI: AI summary
+  + risk badge on project detail, dedicated AI Tasks page with reviewable
+  suggestions before batch-create.
+- **Phase 5+:** external integrations (email, public API + webhooks) —
+  not yet implemented.
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

@@ -9,6 +9,7 @@ const NAV = [
   { to: '/board', label: 'Board' },
   { to: '/timeline', label: 'Timeline' },
   { to: '/forms', label: 'Intake Forms' },
+  { to: '/ai/tasks', label: 'AI Tasks' },
 ];
 
 const ADMIN_NAV = [
@@ -46,7 +47,7 @@ export function AppShell() {
               </NavLink>
             ))
           : null}
-        <div className="footer">v0.3 — Phase 3</div>
+        <div className="footer">v0.4 — Phase 4</div>
       </aside>
       <div className="main">
         <header className="topbar">

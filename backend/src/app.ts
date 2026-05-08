@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './middleware/errorHandler';
+import { aiRouter, projectAiRouter } from './modules/ai/ai.routes';
 import { automationsRouter } from './modules/automations/automations.routes';
 import { registerAutomationEngine } from './modules/automations/automations.engine';
 import { authRouter } from './modules/auth/auth.routes';
@@ -45,6 +46,8 @@ export function createApp() {
   app.use('/api/automations', automationsRouter);
   app.use('/api/reports', reportsRouter);
   app.use('/api/workload', workloadRouter);
+  app.use('/api/ai', aiRouter);
+  app.use('/api/projects/:id/ai', projectAiRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
