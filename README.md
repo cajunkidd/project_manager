@@ -75,6 +75,9 @@ npm run dev:frontend
 | AI features | `/api/ai/risk/:id` (deterministic), `/api/ai/summary/:id` (Claude Opus 4.7 with adaptive thinking), `/api/ai/extract-tasks` (structured outputs). UI on the project detail page: risk badge, AI summary, paste-notes-extract-tasks dialog with review-before-create. AI endpoints return 503 unless `ANTHROPIC_API_KEY` is set. |
 | Timeline (Gantt) | `/timeline` — horizontal SVG view of tasks with start/due dates, color-coded by status/priority, today line, click-to-open drawer. Filter by project. |
 | Overdue scheduler | Background scanner runs every 5 minutes (`OVERDUE_SCAN_MS` to override), fires the `task_due_date_passed` automation trigger and notifies assignees the first time a task crosses its due date. Dedupes via the activity log so it survives restarts. |
+| API tokens | `/api/api-tokens` issue/revoke; tokens are `pm_…`, hashed at rest, shown once at creation. |
+| External API | `/api/v1/{tasks,projects}` token-authed surface (Bearer auth) for external systems. |
+| Outbound webhooks | `/api/webhooks` subscribe URLs to events (`task_created`, `task_updated`, `project_created`, `project_updated`, `form_submitted`). Bodies signed with HMAC-SHA256 in `X-PM-Signature`; `X-PM-Event` carries the event type. Per-subscription delivery log. |
 | Deep links | `?task=<id>` opens the task drawer anywhere; the bell deep-links into it |
 
 There is **no auth yet**. The frontend uses a simple "acting as" user switcher

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
+import { dispatchWebhook } from "../lib/webhooks";
 
 export const projectsRouter = Router();
 
@@ -99,6 +100,7 @@ projectsRouter.post("/", async (req, res) => {
     userId: data.createdById ?? null,
     newValue: project,
   });
+  dispatchWebhook("project_created", { project });
   res.status(201).json(project);
 });
 
@@ -124,6 +126,7 @@ projectsRouter.patch("/:id", async (req, res) => {
     oldValue: before,
     newValue: project,
   });
+  dispatchWebhook("project_updated", { project, before });
   res.json(project);
 });
 

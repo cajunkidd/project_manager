@@ -14,6 +14,7 @@ const NAV = [
   { to: "/automations", label: "Automations" },
   { to: "/workload", label: "Workload" },
   { to: "/reports", label: "Reports" },
+  { to: "/integrations", label: "Integrations" },
   { to: "/settings", label: "Settings" },
 ];
 

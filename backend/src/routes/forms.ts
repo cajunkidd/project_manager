@@ -5,6 +5,7 @@ import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
 import { notify } from "../lib/notify";
 import { runAutomations } from "../lib/automation";
+import { dispatchWebhook } from "../lib/webhooks";
 
 export const formsRouter = Router();
 
@@ -250,6 +251,12 @@ formsRouter.post("/:id/submit", async (req, res) => {
       assignedToId: task.assignedToId,
       title: task.title,
     },
+  });
+  dispatchWebhook("form_submitted", {
+    formId: form.id,
+    formName: form.name,
+    task,
+    submissionId: submission.id,
   });
 
   res.status(201).json({ submission, task });

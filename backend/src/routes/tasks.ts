@@ -5,6 +5,7 @@ import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
 import { notify } from "../lib/notify";
 import { runAutomations } from "../lib/automation";
+import { dispatchWebhook } from "../lib/webhooks";
 
 export const tasksRouter = Router();
 
@@ -136,6 +137,7 @@ tasksRouter.post("/", async (req, res) => {
     });
   }
   await runAutomations({ trigger: "task_created", task });
+  dispatchWebhook("task_created", { task });
   res.status(201).json(task);
 });
 
@@ -182,6 +184,7 @@ tasksRouter.patch("/:id", async (req, res) => {
       oldStatus: before.status,
     });
   }
+  dispatchWebhook("task_updated", { task, before });
   res.json(task);
 });
 
@@ -210,6 +213,7 @@ tasksRouter.patch("/:id/status", async (req, res) => {
       oldStatus: before.status,
     });
   }
+  dispatchWebhook("task_updated", { task, before: { status: before.status } });
   res.json(task);
 });
 

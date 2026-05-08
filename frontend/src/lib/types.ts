@@ -179,6 +179,40 @@ export interface AutomationRule {
   updatedAt: string;
 }
 
+export interface ApiTokenRow {
+  id: string;
+  name: string;
+  prefix: string;
+  isActive: boolean;
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+export type WebhookEvent =
+  | "task_created"
+  | "task_updated"
+  | "project_created"
+  | "project_updated"
+  | "form_submitted";
+
+export interface WebhookSubscriptionRow {
+  id: string;
+  url: string;
+  events: WebhookEvent[];
+  isActive: boolean;
+  createdAt: string;
+  _count?: { deliveries: number };
+}
+
+export interface WebhookDelivery {
+  id: string;
+  event: string;
+  status: number | null;
+  ok: boolean;
+  error: string | null;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
   userId: string;

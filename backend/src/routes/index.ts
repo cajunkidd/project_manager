@@ -9,6 +9,9 @@ import { reportsRouter } from "./reports";
 import { formsRouter } from "./forms";
 import { automationsRouter } from "./automations";
 import { aiRouter } from "./ai";
+import { apiTokensRouter } from "./apiTokens";
+import { webhooksRouter } from "./webhooks";
+import { externalRouter } from "./external";
 
 export const router = Router();
 
@@ -22,3 +25,6 @@ router.use("/reports", reportsRouter);
 router.use("/forms", formsRouter);
 router.use("/automations", automationsRouter);
 router.use("/ai", aiRouter);
+router.use("/api-tokens", apiTokensRouter);
+router.use("/webhooks", webhooksRouter);
+router.use("/v1", externalRouter);
