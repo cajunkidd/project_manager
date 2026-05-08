@@ -6,12 +6,12 @@ import type { Task, TaskStatus } from "../lib/types";
 import { TASK_STATUSES, STATUS_LABEL } from "../lib/types";
 import { getCurrentUserId } from "../lib/currentUser";
 import { DueBadge, PriorityBadge } from "../components/Badges";
-import TaskDrawer from "../components/TaskDrawer";
+import { useTaskOpener } from "../lib/openTask";
 
 export default function MyTasks() {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(getCurrentUserId());
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const { open: openTask } = useTaskOpener();
   useEffect(() => {
     const handler = () => setUserId(getCurrentUserId());
     window.addEventListener("pm:user-changed", handler);
@@ -52,7 +52,7 @@ export default function MyTasks() {
               <tr key={t.id} className="hover:bg-slate-50">
                 <td className="px-4 py-2">
                   <button
-                    onClick={() => setOpenTaskId(t.id)}
+                    onClick={() => openTask(t.id)}
                     className="text-left hover:underline"
                   >
                     {t.title}
@@ -93,7 +93,6 @@ export default function MyTasks() {
           Showing {tasks.length} task{tasks.length === 1 ? "" : "s"}.
         </div>
       )}
-      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
     </div>
   );
 }

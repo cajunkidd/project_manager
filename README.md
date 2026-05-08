@@ -68,6 +68,9 @@ npm run dev:frontend
 | Dashboard | `/api/dashboard/me`, `/api/dashboard/manager` |
 | Kanban Board | Drag-and-drop status changes, assignee/project/priority filters, overdue highlighting |
 | Notifications | `/api/notifications`, in-app bell with unread badge; triggers on assignment changes and `@mentions` in comments |
+| Reports | `/api/reports/tasks-by-user`, `overdue`, `projects-by-status`, `completed-by-week`, `avg-completion-time`, `blocked` |
+| Workload | `/api/reports/workload` per-user counts (open/overdue/urgent/due-this-week/done-this-week) with overload highlighting |
+| Deep links | `?task=<id>` opens the task drawer anywhere; the bell deep-links into it |
 
 There is **no auth yet**. The frontend uses a simple "acting as" user switcher
 (persisted in `localStorage`) so the dashboard and write actions can attribute

@@ -5,6 +5,7 @@ import { tasksRouter } from "./tasks";
 import { commentsRouter } from "./comments";
 import { dashboardRouter } from "./dashboard";
 import { notificationsRouter } from "./notifications";
+import { reportsRouter } from "./reports";
 
 export const router = Router();
 
@@ -14,3 +15,4 @@ router.use("/tasks", tasksRouter);
 router.use("/comments", commentsRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/notifications", notificationsRouter);
+router.use("/reports", reportsRouter);

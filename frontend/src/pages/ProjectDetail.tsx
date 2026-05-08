@@ -11,14 +11,14 @@ import {
   StatusBadge,
 } from "../components/Badges";
 import { getCurrentUserId } from "../lib/currentUser";
-import TaskDrawer from "../components/TaskDrawer";
+import { useTaskOpener } from "../lib/openTask";
 
 export default function ProjectDetail() {
   const { id = "" } = useParams();
   const qc = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [commentBody, setCommentBody] = useState("");
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const { open: openTask } = useTaskOpener();
   const [editing, setEditing] = useState(false);
 
   const { data: project } = useQuery({
@@ -134,7 +134,7 @@ export default function ProjectDetail() {
                     <li key={t.id} className="px-3 py-2 flex items-center justify-between gap-3 hover:bg-slate-50">
                       <div className="min-w-0">
                         <button
-                          onClick={() => setOpenTaskId(t.id)}
+                          onClick={() => openTask(t.id)}
                           className="text-sm text-left hover:underline"
                         >
                           {t.title}
@@ -223,7 +223,6 @@ export default function ProjectDetail() {
         </section>
       </div>
 
-      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
       {editing && (
         <EditProjectDialog
           project={project}

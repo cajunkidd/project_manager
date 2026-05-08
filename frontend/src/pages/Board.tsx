@@ -4,16 +4,16 @@ import { api } from "../lib/api";
 import type { Priority, Project, Task, TaskStatus, User } from "../lib/types";
 import { TASK_STATUSES, STATUS_LABEL, PRIORITY_LABEL } from "../lib/types";
 import { DueBadge, PriorityBadge } from "../components/Badges";
-import TaskDrawer from "../components/TaskDrawer";
+import { useTaskOpener } from "../lib/openTask";
 
 const PRIORITIES: Priority[] = ["low", "normal", "high", "urgent"];
 
 export default function Board() {
   const qc = useQueryClient();
+  const { open: openTask } = useTaskOpener();
   const [projectId, setProjectId] = useState<string>("");
   const [assigneeId, setAssigneeId] = useState<string>("");
   const [priority, setPriority] = useState<Priority | "">("");
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects-all"],
@@ -95,12 +95,10 @@ export default function Board() {
             status={s}
             tasks={columns[s]}
             onDrop={(taskId) => moveTask(taskId, s)}
-            onOpen={(taskId) => setOpenTaskId(taskId)}
+            onOpen={openTask}
           />
         ))}
       </div>
-
-      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
     </div>
   );
 }

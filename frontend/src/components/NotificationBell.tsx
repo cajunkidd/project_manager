@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { Notification } from "../lib/types";
 import { getCurrentUserId } from "../lib/currentUser";
+import { useTaskOpener } from "../lib/openTask";
 
 interface BellData {
   items: Notification[];
@@ -13,6 +14,7 @@ interface BellData {
 export default function NotificationBell() {
   const qc = useQueryClient();
   const nav = useNavigate();
+  const { open: openTask } = useTaskOpener();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [userId, setUserId] = useState<string | null>(getCurrentUserId());
@@ -57,9 +59,8 @@ export default function NotificationBell() {
     setOpen(false);
     if (n.entityType === "project" && n.entityId) {
       nav(`/projects/${n.entityId}`);
-    } else if (n.entityType === "task") {
-      // Tasks open via drawer in their lists; route to My Tasks for now.
-      nav(`/my-tasks`);
+    } else if (n.entityType === "task" && n.entityId) {
+      openTask(n.entityId);
     }
   }
 

@@ -1,16 +1,21 @@
 import { NavLink, Outlet } from "react-router-dom";
 import UserSwitcher from "./UserSwitcher";
 import NotificationBell from "./NotificationBell";
+import TaskDrawer from "./TaskDrawer";
+import { useTaskOpener } from "../lib/openTask";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/my-tasks", label: "My Tasks" },
   { to: "/projects", label: "Projects" },
   { to: "/board", label: "Board" },
+  { to: "/workload", label: "Workload" },
+  { to: "/reports", label: "Reports" },
   { to: "/settings", label: "Settings" },
 ];
 
 export default function AppShell() {
+  const { taskId, close } = useTaskOpener();
   return (
     <div className="flex h-full">
       <aside className="w-60 shrink-0 border-r border-slate-200 bg-white">
@@ -48,6 +53,7 @@ export default function AppShell() {
           <Outlet />
         </main>
       </div>
+      <TaskDrawer taskId={taskId} onClose={close} />
     </div>
   );
 }
