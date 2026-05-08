@@ -1,0 +1,13 @@
+{
+  "name": "project-manager",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Internal project management application (monorepo).",
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "npm run test --workspace @project-manager/backend",
+    "test:frontend": "npm run test --workspace @project-manager/frontend",
+    "build": "npm run build --workspaces --if-present"
+  }
+}
