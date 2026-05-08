@@ -14,7 +14,7 @@ export function generateWebhookSecret(): string {
   return `whsec_${crypto.randomBytes(24).toString("base64url")}`;
 }
 
-function sign(secret: string, body: string): string {
+export function signWebhookBody(secret: string, body: string): string {
   return crypto.createHmac("sha256", secret).update(body).digest("hex");
 }
 
@@ -23,7 +23,7 @@ async function deliver(
   event: WebhookEvent,
   body: string,
 ) {
-  const signature = sign(subscription.secret, body);
+  const signature = signWebhookBody(subscription.secret, body);
   let status: number | null = null;
   let ok = false;
   let error: string | null = null;

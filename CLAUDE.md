@@ -96,8 +96,9 @@ covered yet — needs a DB fixture story.
   `pages/Automations.tsx`. Don't forget the `matches` switch.
 - Adding a new webhook event: add to `WEBHOOK_EVENTS` in
   `lib/webhooks.ts` and to the union in `frontend/src/lib/types.ts`.
-- Migrations have not been generated in this repo. First run is
-  `prisma migrate dev --name init`.
+- The `init` migration is committed under `backend/prisma/migrations/`.
+  Use `prisma migrate dev --name <change>` for new schema changes;
+  `prisma migrate deploy` in CI/prod.
 
 ## When extending the app
 
