@@ -58,8 +58,11 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
 - **Phase 2 — Workflow engine:** done. In-app notifications (with @mention
   detection), intake form builder + submission flow that auto-creates tasks,
   trigger/action automation engine wired into the internal event bus.
-- **Phase 3+:** reports, workload, Gantt, AI features, integrations — not
-  yet implemented.
+- **Phase 3 — Reporting & visibility:** done. Reports (open-by-user,
+  overdue, projects-by-status, completion-by-week, avg-completion, blocked),
+  manager workload screen with overload highlighting, per-project timeline
+  view with status-aware bars.
+- **Phase 4+:** AI features and external integrations — not yet implemented.
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

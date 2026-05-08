@@ -7,10 +7,15 @@ const NAV = [
   { to: '/my-tasks', label: 'My Tasks' },
   { to: '/projects', label: 'Projects' },
   { to: '/board', label: 'Board' },
+  { to: '/timeline', label: 'Timeline' },
   { to: '/forms', label: 'Intake Forms' },
 ];
 
-const ADMIN_NAV = [{ to: '/automations', label: 'Automations' }];
+const ADMIN_NAV = [
+  { to: '/reports', label: 'Reports' },
+  { to: '/workload', label: 'Workload' },
+  { to: '/automations', label: 'Automations' },
+];
 
 export function AppShell() {
   const { user, logout } = useAuth();
@@ -41,7 +46,7 @@ export function AppShell() {
               </NavLink>
             ))
           : null}
-        <div className="footer">v0.2 — Phase 2</div>
+        <div className="footer">v0.3 — Phase 3</div>
       </aside>
       <div className="main">
         <header className="topbar">

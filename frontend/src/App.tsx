@@ -14,7 +14,10 @@ import { NotificationsPage } from './pages/NotificationsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ReportsPage } from './pages/ReportsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
+import { TimelinePage } from './pages/TimelinePage';
+import { WorkloadPage } from './pages/WorkloadPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -74,6 +77,23 @@ export function App() {
           element={
             <RequireAdmin>
               <AutomationsPage />
+            </RequireAdmin>
+          }
+        />
+        <Route path="timeline" element={<TimelinePage />} />
+        <Route
+          path="reports"
+          element={
+            <RequireAdmin>
+              <ReportsPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="workload"
+          element={
+            <RequireAdmin>
+              <WorkloadPage />
             </RequireAdmin>
           }
         />

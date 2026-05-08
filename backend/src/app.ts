@@ -14,8 +14,10 @@ import { formsRouter } from './modules/forms/forms.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
+import { reportsRouter } from './modules/reports/reports.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { workloadRouter } from './modules/workload/workload.routes';
 
 export function createApp() {
   registerNotificationListeners();
@@ -41,6 +43,8 @@ export function createApp() {
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/forms', formsRouter);
   app.use('/api/automations', automationsRouter);
+  app.use('/api/reports', reportsRouter);
+  app.use('/api/workload', workloadRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
