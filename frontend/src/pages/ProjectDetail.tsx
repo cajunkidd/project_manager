@@ -12,6 +12,7 @@ import {
 } from "../components/Badges";
 import { getCurrentUserId } from "../lib/currentUser";
 import { useTaskOpener } from "../lib/openTask";
+import ProjectAI from "../components/ProjectAI";
 
 export default function ProjectDetail() {
   const { id = "" } = useParams();
@@ -99,6 +100,8 @@ export default function ProjectDetail() {
           </button>
         </div>
       </header>
+
+      <ProjectAI projectId={id} />
 
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <h2 className="text-sm font-semibold text-slate-700 mb-3">Tasks</h2>

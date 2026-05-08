@@ -8,6 +8,7 @@ import { notificationsRouter } from "./notifications";
 import { reportsRouter } from "./reports";
 import { formsRouter } from "./forms";
 import { automationsRouter } from "./automations";
+import { aiRouter } from "./ai";
 
 export const router = Router();
 
@@ -20,3 +21,4 @@ router.use("/notifications", notificationsRouter);
 router.use("/reports", reportsRouter);
 router.use("/forms", formsRouter);
 router.use("/automations", automationsRouter);
+router.use("/ai", aiRouter);
