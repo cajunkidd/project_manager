@@ -53,13 +53,16 @@ model User {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  ownedProjects    Project[]     @relation("ProjectOwner")
-  createdProjects  Project[]     @relation("ProjectCreator")
-  assignedTasks    Task[]        @relation("TaskAssignee")
-  createdTasks     Task[]        @relation("TaskCreator")
+  ownedProjects    Project[]      @relation("ProjectOwner")
+  createdProjects  Project[]      @relation("ProjectCreator")
+  assignedTasks    Task[]         @relation("TaskAssignee")
+  createdTasks     Task[]         @relation("TaskCreator")
   comments         Comment[]
   activityLogs     ActivityLog[]
   notifications    Notification[]
+  defaultedForms   Form[]         @relation("FormDefaultAssignee")
+  createdForms     Form[]         @relation("FormCreator")
+  formSubmissions  FormSubmission[]
 
   @@map("users")
 }
@@ -83,6 +86,7 @@ model Project {
   createdBy User?     @relation("ProjectCreator", fields: [createdById], references: [id])
   tasks     Task[]
   comments  Comment[]
+  forms     Form[]
 
   @@index([status])
   @@index([ownerId])
@@ -106,12 +110,13 @@ model Task {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parentTask Task?     @relation("Subtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
-  subtasks   Task[]    @relation("Subtasks")
-  assignedTo User?     @relation("TaskAssignee", fields: [assignedToId], references: [id])
-  createdBy  User?     @relation("TaskCreator", fields: [createdById], references: [id])
-  comments   Comment[]
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentTask  Task?            @relation("Subtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks    Task[]           @relation("Subtasks")
+  assignedTo  User?            @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy   User?            @relation("TaskCreator", fields: [createdById], references: [id])
+  comments    Comment[]
+  submissions FormSubmission[]
 
   @@index([projectId])
   @@index([status])
@@ -136,6 +141,59 @@ model Comment {
   @@index([taskId])
   @@index([projectId])
   @@map("comments")
+}
+
+model Form {
+  id                String   @id @default(uuid())
+  name              String
+  description       String?
+  defaultProjectId  String?  @map("default_project_id")
+  defaultAssigneeId String?  @map("default_assignee_id")
+  defaultPriority   Priority @default(normal) @map("default_priority")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdById       String?  @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  defaultProject  Project?         @relation(fields: [defaultProjectId], references: [id])
+  defaultAssignee User?            @relation("FormDefaultAssignee", fields: [defaultAssigneeId], references: [id])
+  createdBy       User?            @relation("FormCreator", fields: [createdById], references: [id])
+  fields          FormField[]
+  submissions     FormSubmission[]
+
+  @@map("forms")
+}
+
+model FormField {
+  id         String   @id @default(uuid())
+  formId     String   @map("form_id")
+  label      String
+  fieldType  String   @map("field_type")
+  isRequired Boolean  @default(false) @map("is_required")
+  options    Json?
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@map("form_fields")
+}
+
+model FormSubmission {
+  id            String   @id @default(uuid())
+  formId        String   @map("form_id")
+  submittedById String?  @map("submitted_by")
+  responseData  Json     @map("response_data")
+  createdTaskId String?  @map("created_task_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  form          Form  @relation(fields: [formId], references: [id], onDelete: Cascade)
+  submittedBy   User? @relation(fields: [submittedById], references: [id])
+  createdTask   Task? @relation(fields: [createdTaskId], references: [id])
+
+  @@index([formId])
+  @@map("form_submissions")
 }
 
 model Notification {

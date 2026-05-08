@@ -6,6 +6,7 @@ import { commentsRouter } from "./comments";
 import { dashboardRouter } from "./dashboard";
 import { notificationsRouter } from "./notifications";
 import { reportsRouter } from "./reports";
+import { formsRouter } from "./forms";
 
 export const router = Router();
 
@@ -16,3 +17,4 @@ router.use("/comments", commentsRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/reports", reportsRouter);
+router.use("/forms", formsRouter);

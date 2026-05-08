@@ -100,6 +100,51 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
   urgent: "Urgent",
 };
 
+export type FormFieldType =
+  | "text"
+  | "textarea"
+  | "dropdown"
+  | "checkbox"
+  | "date"
+  | "user_picker";
+
+export interface FormField {
+  id: string;
+  formId: string;
+  label: string;
+  fieldType: FormFieldType;
+  isRequired: boolean;
+  options: string[] | null;
+  sortOrder: number;
+}
+
+export interface IntakeForm {
+  id: string;
+  name: string;
+  description: string | null;
+  defaultProjectId: string | null;
+  defaultAssigneeId: string | null;
+  defaultPriority: Priority;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  fields?: FormField[];
+  defaultProject?: { id: string; name: string } | null;
+  defaultAssignee?: { id: string; displayName: string } | null;
+  _count?: { submissions: number; fields: number };
+}
+
+export interface FormSubmission {
+  id: string;
+  formId: string;
+  submittedById: string | null;
+  responseData: Record<string, unknown>;
+  createdTaskId: string | null;
+  createdAt: string;
+  submittedBy?: { id: string; displayName: string } | null;
+  createdTask?: { id: string; title: string; status: TaskStatus } | null;
+}
+
 export interface Notification {
   id: string;
   userId: string;

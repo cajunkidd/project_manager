@@ -9,6 +9,7 @@ const NAV = [
   { to: "/my-tasks", label: "My Tasks" },
   { to: "/projects", label: "Projects" },
   { to: "/board", label: "Board" },
+  { to: "/forms", label: "Intake Forms" },
   { to: "/workload", label: "Workload" },
   { to: "/reports", label: "Reports" },
   { to: "/settings", label: "Settings" },

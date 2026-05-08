@@ -7,6 +7,9 @@ import MyTasks from "./pages/MyTasks";
 import Board from "./pages/Board";
 import Reports from "./pages/Reports";
 import Workload from "./pages/Workload";
+import Forms from "./pages/Forms";
+import FormSubmit from "./pages/FormSubmit";
+import FormEdit from "./pages/FormEdit";
 import Settings from "./pages/Settings";
 
 export default function App() {
@@ -21,6 +24,9 @@ export default function App() {
         <Route path="/board" element={<Board />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/workload" element={<Workload />} />
+        <Route path="/forms" element={<Forms />} />
+        <Route path="/forms/:id" element={<FormSubmit />} />
+        <Route path="/forms/:id/edit" element={<FormEdit />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<div className="p-6">Not found</div>} />
       </Route>

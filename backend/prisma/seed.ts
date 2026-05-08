@@ -88,6 +88,36 @@ async function main() {
     ],
   });
 
+  const existingForm = await prisma.form.findFirst({ where: { name: "IT Request" } });
+  if (!existingForm) {
+    await prisma.form.create({
+      data: {
+        name: "IT Request",
+        description: "Submit an IT support or project request.",
+        defaultProjectId: project.id,
+        defaultAssigneeId: manager.id,
+        defaultPriority: "normal",
+        createdById: admin.id,
+        fields: {
+          create: [
+            { label: "Summary", fieldType: "text", isRequired: true, sortOrder: 0 },
+            { label: "Details", fieldType: "textarea", isRequired: true, sortOrder: 1 },
+            {
+              label: "Category",
+              fieldType: "dropdown",
+              isRequired: true,
+              options: ["Hardware", "Software", "Network", "Access", "Other"] as never,
+              sortOrder: 2,
+            },
+            { label: "Needed by", fieldType: "date", sortOrder: 3 },
+            { label: "Urgent?", fieldType: "checkbox", sortOrder: 4 },
+            { label: "Assign to", fieldType: "user_picker", sortOrder: 5 },
+          ],
+        },
+      },
+    });
+  }
+
   // eslint-disable-next-line no-console
   console.log("Seed complete:", { project: project.name });
 }
