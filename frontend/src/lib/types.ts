@@ -148,6 +148,7 @@ export interface FormSubmission {
 export type AutomationTrigger =
   | "task_created"
   | "task_status_changed"
+  | "task_due_date_passed"
   | "comment_created"
   | "form_submitted";
 

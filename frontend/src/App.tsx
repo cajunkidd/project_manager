@@ -7,6 +7,7 @@ import MyTasks from "./pages/MyTasks";
 import Board from "./pages/Board";
 import Reports from "./pages/Reports";
 import Workload from "./pages/Workload";
+import Timeline from "./pages/Timeline";
 import Forms from "./pages/Forms";
 import FormSubmit from "./pages/FormSubmit";
 import FormEdit from "./pages/FormEdit";
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/board" element={<Board />} />
+        <Route path="/timeline" element={<Timeline />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/workload" element={<Workload />} />
         <Route path="/forms" element={<Forms />} />

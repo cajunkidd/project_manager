@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { errorHandler } from "./middleware/error";
 import { router } from "./routes";
+import { startOverdueScanner } from "./lib/overdueScanner";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -19,4 +20,5 @@ app.use(errorHandler);
 app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`[backend] listening on http://localhost:${port}`);
+  startOverdueScanner();
 });

@@ -22,6 +22,7 @@ import { getCurrentUserId } from "../lib/currentUser";
 const TRIGGERS: { value: AutomationTrigger; label: string }[] = [
   { value: "task_created", label: "Task created" },
   { value: "task_status_changed", label: "Task status changed" },
+  { value: "task_due_date_passed", label: "Task due date passed" },
   { value: "comment_created", label: "Comment created" },
   { value: "form_submitted", label: "Form submitted" },
 ];

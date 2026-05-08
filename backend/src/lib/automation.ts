@@ -5,6 +5,7 @@ import { notify } from "./notify";
 export type AutomationTrigger =
   | "task_created"
   | "task_status_changed"
+  | "task_due_date_passed"
   | "comment_created"
   | "form_submitted";
 
@@ -38,6 +39,7 @@ interface FormCtx {
 export type EventCtx =
   | ({ trigger: "task_created" } & TaskCtx)
   | ({ trigger: "task_status_changed" } & TaskCtx)
+  | ({ trigger: "task_due_date_passed" } & TaskCtx)
   | ({ trigger: "comment_created" } & CommentCtx)
   | ({ trigger: "form_submitted" } & FormCtx);
 
@@ -67,6 +69,7 @@ function matches(conditions: Conditions | null, ctx: EventCtx): boolean {
   switch (ctx.trigger) {
     case "task_created":
     case "task_status_changed":
+    case "task_due_date_passed":
       return checkKeys(ctx.task as unknown as Record<string, unknown>);
     case "comment_created":
       return checkKeys(ctx.comment as unknown as Record<string, unknown>);

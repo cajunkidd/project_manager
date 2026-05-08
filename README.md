@@ -73,6 +73,8 @@ npm run dev:frontend
 | Intake Forms | `/api/forms` CRUD, `/api/forms/:id/submit` creates a task in the form's default project; admin field editor (text, textarea, dropdown, checkbox, date, user picker) |
 | Automations | `/api/automations` CRUD; trigger/action engine fires on `task_created`, `task_status_changed`, `comment_created`, `form_submitted`. Actions: `send_notification`, `assign_user`, `change_status`, `change_priority`, `add_comment`. Conditions are equality matches against the event entity. |
 | AI features | `/api/ai/risk/:id` (deterministic), `/api/ai/summary/:id` (Claude Opus 4.7 with adaptive thinking), `/api/ai/extract-tasks` (structured outputs). UI on the project detail page: risk badge, AI summary, paste-notes-extract-tasks dialog with review-before-create. AI endpoints return 503 unless `ANTHROPIC_API_KEY` is set. |
+| Timeline (Gantt) | `/timeline` — horizontal SVG view of tasks with start/due dates, color-coded by status/priority, today line, click-to-open drawer. Filter by project. |
+| Overdue scheduler | Background scanner runs every 5 minutes (`OVERDUE_SCAN_MS` to override), fires the `task_due_date_passed` automation trigger and notifies assignees the first time a task crosses its due date. Dedupes via the activity log so it survives restarts. |
 | Deep links | `?task=<id>` opens the task drawer anywhere; the bell deep-links into it |
 
 There is **no auth yet**. The frontend uses a simple "acting as" user switcher
