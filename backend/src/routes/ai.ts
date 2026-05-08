@@ -4,6 +4,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { AI_MODEL, getAnthropic } from "../lib/anthropic";
+import { computeRisk } from "../lib/risk";
 
 export const aiRouter = Router();
 
@@ -26,14 +27,6 @@ aiRouter.get("/risk/:projectId", async (req, res) => {
   });
   if (!project) throw new HttpError(404, "project_not_found");
 
-  const today = startOfDay();
-  const open = project.tasks.filter(
-    (t) => t.status !== "done" && t.status !== "cancelled",
-  );
-  const overdue = open.filter((t) => t.dueDate && t.dueDate < today).length;
-  const blocked = open.filter((t) => t.status === "waiting").length;
-  const unassigned = open.filter((t) => !t.assignedToId).length;
-
   const lastActivity = await prisma.activityLog.findFirst({
     where: {
       OR: [
@@ -46,78 +39,18 @@ aiRouter.get("/risk/:projectId", async (req, res) => {
     },
     orderBy: { createdAt: "desc" },
   });
-  const daysSinceActivity = lastActivity
-    ? Math.floor(
-        (Date.now() - lastActivity.createdAt.getTime()) /
-          (24 * 60 * 60 * 1000),
-      )
-    : 999;
 
-  const dueProximityDays = project.dueDate
-    ? Math.floor(
-        (project.dueDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
-      )
-    : null;
-
-  // Weighted score, capped at 100.
-  const reasons: string[] = [];
-  let score = 0;
-  if (overdue > 0) {
-    const v = Math.min(40, overdue * 8);
-    score += v;
-    reasons.push(`${overdue} overdue task${overdue === 1 ? "" : "s"}`);
-  }
-  if (blocked > 0) {
-    const v = Math.min(20, blocked * 5);
-    score += v;
-    reasons.push(`${blocked} blocked task${blocked === 1 ? "" : "s"}`);
-  }
-  if (unassigned > 0 && open.length > 0) {
-    const ratio = unassigned / open.length;
-    const v = Math.round(ratio * 15);
-    if (v > 0) {
-      score += v;
-      reasons.push(`${unassigned} unassigned`);
-    }
-  }
-  if (daysSinceActivity >= 7) {
-    const v = Math.min(15, daysSinceActivity);
-    score += v;
-    reasons.push(`no activity in ${daysSinceActivity}d`);
-  }
-  if (
-    dueProximityDays !== null &&
-    dueProximityDays >= 0 &&
-    dueProximityDays <= 7 &&
-    open.length > 0
-  ) {
-    score += 10;
-    reasons.push(`due in ${dueProximityDays}d with ${open.length} open`);
-  } else if (dueProximityDays !== null && dueProximityDays < 0) {
-    score += 20;
-    reasons.push(`past due by ${-dueProximityDays}d`);
-  }
-
-  score = Math.min(100, score);
-  const level = score >= 70 ? "high" : score >= 40 ? "medium" : "low";
-  const explanation =
-    reasons.length === 0
-      ? "Project looks healthy. No risk signals."
-      : `Risk drivers: ${reasons.join(", ")}.`;
-
-  res.json({
-    score,
-    level,
-    explanation,
-    signals: {
-      overdue,
-      blocked,
-      unassigned,
-      daysSinceActivity,
-      dueProximityDays,
-      openTasks: open.length,
-    },
-  });
+  res.json(
+    computeRisk({
+      tasks: project.tasks.map((t) => ({
+        status: t.status,
+        dueDate: t.dueDate,
+        assignedToId: t.assignedToId,
+      })),
+      projectDueDate: project.dueDate,
+      lastActivityAt: lastActivity?.createdAt ?? null,
+    }),
+  );
 });
 
 // ---------- AI project summary ----------

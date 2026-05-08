@@ -59,7 +59,7 @@ export interface Action {
   body?: string;
 }
 
-function matches(conditions: Conditions | null, ctx: EventCtx): boolean {
+export function matches(conditions: Conditions | null, ctx: EventCtx): boolean {
   if (!conditions) return true;
   const checkKeys = (obj: Record<string, unknown>) =>
     Object.entries(conditions).every(([k, v]) => {
