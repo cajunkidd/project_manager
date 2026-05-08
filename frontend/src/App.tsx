@@ -16,6 +16,7 @@ import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { TimelinePage } from './pages/TimelinePage';
 import { WorkloadPage } from './pages/WorkloadPage';
@@ -96,6 +97,14 @@ export function App() {
           element={
             <RequireAdmin>
               <WorkloadPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <RequireAdmin>
+              <SettingsPage />
             </RequireAdmin>
           }
         />

@@ -16,6 +16,7 @@ const ADMIN_NAV = [
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
   { to: '/automations', label: 'Automations' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 export function AppShell() {
@@ -47,7 +48,7 @@ export function AppShell() {
               </NavLink>
             ))
           : null}
-        <div className="footer">v0.4 — Phase 4</div>
+        <div className="footer">v0.5 — Phase 5</div>
       </aside>
       <div className="main">
         <header className="topbar">

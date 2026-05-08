@@ -68,8 +68,18 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   factor breakdown), and task extraction from pasted text. UI: AI summary
   + risk badge on project detail, dedicated AI Tasks page with reviewable
   suggestions before batch-create.
-- **Phase 5+:** external integrations (email, public API + webhooks) —
-  not yet implemented.
+- **Phase 5 — Integrations:** done. Provider-abstracted email module with a
+  capturing stub used by tests, listeners that send on task assignment and
+  @mention, an inbound-email ingest endpoint that creates tasks (admin-only),
+  and a daily-digest endpoint. Public token-authenticated REST API at
+  `/api/v1/*` backed by hashed API tokens with scoped permissions. Webhook
+  subscriptions hooked into the internal event bus, delivering signed
+  (HMAC-SHA256) JSON payloads with delivery records (status, attempts,
+  response body) for debugging. Admin Settings page provides token + webhook
+  management with one-time secret reveal.
+
+The whole platform is implemented and tested — 156 tests across both
+workspaces (122 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

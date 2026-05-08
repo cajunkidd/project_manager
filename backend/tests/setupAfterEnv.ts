@@ -1,7 +1,10 @@
 import { prisma } from '../src/db/prisma';
 
 beforeEach(async () => {
-  // SQLite-friendly clean: delete in FK-safe order.
+  await prisma.webhookDelivery.deleteMany();
+  await prisma.webhookSubscription.deleteMany();
+  await prisma.apiToken.deleteMany();
+  await prisma.emailLog.deleteMany();
   await prisma.formSubmission.deleteMany();
   await prisma.formField.deleteMany();
   await prisma.form.deleteMany();
