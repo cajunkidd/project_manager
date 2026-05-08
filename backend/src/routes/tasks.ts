@@ -78,6 +78,16 @@ tasksRouter.get("/", async (req, res) => {
   res.json(tasks);
 });
 
+tasksRouter.get("/:id/activity", async (req, res) => {
+  const logs = await prisma.activityLog.findMany({
+    where: { entityType: "task", entityId: req.params.id },
+    include: { user: { select: { id: true, displayName: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  res.json(logs);
+});
+
 tasksRouter.get("/:id", async (req, res) => {
   const task = await prisma.task.findUnique({
     where: { id: req.params.id },

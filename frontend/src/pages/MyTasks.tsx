@@ -5,11 +5,13 @@ import { api } from "../lib/api";
 import type { Task, TaskStatus } from "../lib/types";
 import { TASK_STATUSES, STATUS_LABEL } from "../lib/types";
 import { getCurrentUserId } from "../lib/currentUser";
-import { DueBadge, PriorityBadge, StatusBadge } from "../components/Badges";
+import { DueBadge, PriorityBadge } from "../components/Badges";
+import TaskDrawer from "../components/TaskDrawer";
 
 export default function MyTasks() {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(getCurrentUserId());
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   useEffect(() => {
     const handler = () => setUserId(getCurrentUserId());
     window.addEventListener("pm:user-changed", handler);
@@ -47,8 +49,15 @@ export default function MyTasks() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {tasks.map((t) => (
-              <tr key={t.id}>
-                <td className="px-4 py-2">{t.title}</td>
+              <tr key={t.id} className="hover:bg-slate-50">
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => setOpenTaskId(t.id)}
+                    className="text-left hover:underline"
+                  >
+                    {t.title}
+                  </button>
+                </td>
                 <td className="px-4 py-2">
                   {t.project ? (
                     <Link to={`/projects/${t.project.id}`} className="text-brand hover:underline">
@@ -82,10 +91,9 @@ export default function MyTasks() {
       {tasks.length > 0 && (
         <div className="text-xs text-slate-500">
           Showing {tasks.length} task{tasks.length === 1 ? "" : "s"}.
-          {" "}
-          <span className="inline-flex"><StatusBadge status="in_progress" /></span>
         </div>
       )}
+      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
     </div>
   );
 }

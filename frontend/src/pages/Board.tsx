@@ -1,22 +1,38 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import type { Project, Task, TaskStatus } from "../lib/types";
-import { TASK_STATUSES, STATUS_LABEL } from "../lib/types";
+import type { Priority, Project, Task, TaskStatus, User } from "../lib/types";
+import { TASK_STATUSES, STATUS_LABEL, PRIORITY_LABEL } from "../lib/types";
 import { DueBadge, PriorityBadge } from "../components/Badges";
+import TaskDrawer from "../components/TaskDrawer";
+
+const PRIORITIES: Priority[] = ["low", "normal", "high", "urgent"];
 
 export default function Board() {
   const qc = useQueryClient();
   const [projectId, setProjectId] = useState<string>("");
+  const [assigneeId, setAssigneeId] = useState<string>("");
+  const [priority, setPriority] = useState<Priority | "">("");
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects-all"],
     queryFn: () => api.get<Project[]>("/projects"),
   });
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => api.get<User[]>("/users"),
+  });
   const { data: tasks = [] } = useQuery({
-    queryKey: ["board-tasks", projectId],
-    queryFn: () =>
-      api.get<Task[]>(`/tasks${projectId ? `?projectId=${projectId}` : ""}`),
+    queryKey: ["board-tasks", projectId, assigneeId, priority],
+    queryFn: () => {
+      const qs = new URLSearchParams();
+      if (projectId) qs.set("projectId", projectId);
+      if (assigneeId) qs.set("assignedToId", assigneeId);
+      if (priority) qs.set("priority", priority);
+      const s = qs.toString();
+      return api.get<Task[]>(`/tasks${s ? `?${s}` : ""}`);
+    },
   });
 
   const columns = useMemo(() => {
@@ -36,18 +52,40 @@ export default function Board() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-semibold">Board</h1>
-        <select
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          className="border border-slate-300 rounded px-2 py-1 text-sm bg-white"
-        >
-          <option value="">All projects</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            className="border border-slate-300 rounded px-2 py-1 text-sm bg-white"
+          >
+            <option value="">All projects</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <select
+            value={assigneeId}
+            onChange={(e) => setAssigneeId(e.target.value)}
+            className="border border-slate-300 rounded px-2 py-1 text-sm bg-white"
+          >
+            <option value="">All assignees</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>{u.displayName}</option>
+            ))}
+          </select>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as Priority | "")}
+            className="border border-slate-300 rounded px-2 py-1 text-sm bg-white"
+          >
+            <option value="">All priorities</option>
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
@@ -57,9 +95,12 @@ export default function Board() {
             status={s}
             tasks={columns[s]}
             onDrop={(taskId) => moveTask(taskId, s)}
+            onOpen={(taskId) => setOpenTaskId(taskId)}
           />
         ))}
       </div>
+
+      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
     </div>
   );
 }
@@ -68,10 +109,12 @@ function Column({
   status,
   tasks,
   onDrop,
+  onOpen,
 }: {
   status: TaskStatus;
   tasks: Task[];
   onDrop: (taskId: string) => void;
+  onOpen: (taskId: string) => void;
 }) {
   const [over, setOver] = useState(false);
   return (
@@ -98,14 +141,14 @@ function Column({
       </div>
       <div className="space-y-2">
         {tasks.map((t) => (
-          <Card key={t.id} task={t} />
+          <Card key={t.id} task={t} onOpen={() => onOpen(t.id)} />
         ))}
       </div>
     </div>
   );
 }
 
-function Card({ task }: { task: Task }) {
+function Card({ task, onOpen }: { task: Task; onOpen: () => void }) {
   const overdue =
     !!task.dueDate &&
     task.status !== "done" &&
@@ -115,7 +158,8 @@ function Card({ task }: { task: Task }) {
     <div
       draggable
       onDragStart={(e) => e.dataTransfer.setData("text/plain", task.id)}
-      className={`bg-white border rounded p-2 shadow-sm cursor-grab active:cursor-grabbing ${
+      onClick={onOpen}
+      className={`bg-white border rounded p-2 shadow-sm cursor-pointer hover:border-slate-300 ${
         overdue ? "border-rose-300" : "border-slate-200"
       }`}
     >

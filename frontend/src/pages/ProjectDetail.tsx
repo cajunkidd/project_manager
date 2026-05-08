@@ -11,12 +11,15 @@ import {
   StatusBadge,
 } from "../components/Badges";
 import { getCurrentUserId } from "../lib/currentUser";
+import TaskDrawer from "../components/TaskDrawer";
 
 export default function ProjectDetail() {
   const { id = "" } = useParams();
   const qc = useQueryClient();
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [commentBody, setCommentBody] = useState("");
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
@@ -87,6 +90,14 @@ export default function ProjectDetail() {
             {project.dueDate && <> · Due {new Date(project.dueDate).toLocaleDateString()}</>}
           </div>
         </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setEditing(true)}
+            className="text-sm border border-slate-300 hover:bg-slate-100 px-3 py-1.5 rounded"
+          >
+            Edit
+          </button>
+        </div>
       </header>
 
       <section className="bg-white border border-slate-200 rounded-lg p-4">
@@ -120,9 +131,14 @@ export default function ProjectDetail() {
                 <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">{STATUS_LABEL[s]}</div>
                 <ul className="divide-y divide-slate-100 border border-slate-100 rounded">
                   {list.map((t) => (
-                    <li key={t.id} className="px-3 py-2 flex items-center justify-between gap-3">
+                    <li key={t.id} className="px-3 py-2 flex items-center justify-between gap-3 hover:bg-slate-50">
                       <div className="min-w-0">
-                        <div className="text-sm">{t.title}</div>
+                        <button
+                          onClick={() => setOpenTaskId(t.id)}
+                          className="text-sm text-left hover:underline"
+                        >
+                          {t.title}
+                        </button>
                         <div className="text-xs text-slate-500">
                           {t.assignedTo?.displayName ?? "Unassigned"}
                         </div>
@@ -205,6 +221,165 @@ export default function ProjectDetail() {
             {activity.length === 0 && <li className="text-sm text-slate-500">No activity yet.</li>}
           </ul>
         </section>
+      </div>
+
+      <TaskDrawer taskId={openTaskId} onClose={() => setOpenTaskId(null)} />
+      {editing && (
+        <EditProjectDialog
+          project={project}
+          users={users}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["project", id] });
+            qc.invalidateQueries({ queryKey: ["projects"] });
+            setEditing(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditProjectDialog({
+  project,
+  users,
+  onClose,
+  onSaved,
+}: {
+  project: Project;
+  users: User[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(project.name);
+  const [description, setDescription] = useState(project.description ?? "");
+  const [status, setStatus] = useState(project.status);
+  const [priority, setPriority] = useState(project.priority);
+  const [ownerId, setOwnerId] = useState(project.ownerId ?? "");
+  const [dueDate, setDueDate] = useState(
+    project.dueDate ? new Date(project.dueDate).toISOString().slice(0, 10) : "",
+  );
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      await api.patch(`/projects/${project.id}`, {
+        name,
+        description: description || null,
+        status,
+        priority,
+        ownerId: ownerId || null,
+        dueDate: dueDate || null,
+      });
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    if (!confirm(`Delete project "${project.name}"? Tasks will also be removed.`)) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/projects/${project.id}`);
+      window.location.href = "/projects";
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-5 space-y-3">
+        <h2 className="text-lg font-semibold">Edit Project</h2>
+        <label className="block">
+          <span className="text-xs font-medium text-slate-600">Name</span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1 w-full border border-slate-300 rounded px-3 py-1.5 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-slate-600">Description</span>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="mt-1 w-full border border-slate-300 rounded px-3 py-1.5 text-sm"
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">Status</span>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as Project["status"])}
+              className="mt-1 w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+            >
+              {(["not_started", "active", "on_hold", "completed", "cancelled"] as const).map((s) => (
+                <option key={s} value={s}>{s.replace("_", " ")}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">Priority</span>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as Project["priority"])}
+              className="mt-1 w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+            >
+              {(["low", "normal", "high", "urgent"] as const).map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">Owner</span>
+            <select
+              value={ownerId}
+              onChange={(e) => setOwnerId(e.target.value)}
+              className="mt-1 w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+            >
+              <option value="">—</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>{u.displayName}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-slate-600">Due date</span>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="mt-1 w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+            />
+          </label>
+        </div>
+        <div className="flex justify-between pt-2">
+          <button
+            onClick={remove}
+            disabled={deleting}
+            className="text-sm text-rose-600 hover:text-rose-700 disabled:opacity-50"
+          >
+            Delete project
+          </button>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-3 py-1.5 text-sm rounded hover:bg-slate-100">
+              Cancel
+            </button>
+            <button
+              disabled={!name || saving}
+              onClick={save}
+              className="bg-brand hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium px-3 py-1.5 rounded"
+            >
+              Save
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
