@@ -100,6 +100,18 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
   urgent: "Urgent",
 };
 
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  entityType: string | null;
+  entityId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
   not_started: "Not Started",
   active: "Active",

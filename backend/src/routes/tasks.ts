@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
+import { notify } from "../lib/notify";
 
 export const tasksRouter = Router();
 
@@ -123,6 +124,16 @@ tasksRouter.post("/", async (req, res) => {
     userId: data.createdById ?? null,
     newValue: task,
   });
+  if (task.assignedToId && task.assignedToId !== data.createdById) {
+    await notify({
+      userId: task.assignedToId,
+      title: "Assigned: " + task.title,
+      message: "You were assigned a new task.",
+      type: "task_assigned",
+      entityType: "task",
+      entityId: task.id,
+    });
+  }
   res.status(201).json(task);
 });
 
@@ -149,6 +160,19 @@ tasksRouter.patch("/:id", async (req, res) => {
     oldValue: before,
     newValue: task,
   });
+  if (
+    task.assignedToId &&
+    task.assignedToId !== before.assignedToId
+  ) {
+    await notify({
+      userId: task.assignedToId,
+      title: "Assigned: " + task.title,
+      message: "You were assigned this task.",
+      type: "task_assigned",
+      entityType: "task",
+      entityId: task.id,
+    });
+  }
   res.json(task);
 });
 

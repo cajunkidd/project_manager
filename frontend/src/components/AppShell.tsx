@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import UserSwitcher from "./UserSwitcher";
+import NotificationBell from "./NotificationBell";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard" },
@@ -38,7 +39,10 @@ export default function AppShell() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 flex items-center justify-between border-b border-slate-200 bg-white px-6">
           <div className="text-sm text-slate-500">Internal Project Management</div>
-          <UserSwitcher />
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <UserSwitcher />
+          </div>
         </header>
         <main className="flex-1 overflow-auto">
           <Outlet />

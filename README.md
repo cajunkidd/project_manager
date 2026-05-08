@@ -66,7 +66,8 @@ npm run dev:frontend
 | Comments | Per-task and per-project (`/api/comments`) |
 | Activity log | Auto-recorded on create/update/delete; per-project view |
 | Dashboard | `/api/dashboard/me`, `/api/dashboard/manager` |
-| Kanban Board | Drag-and-drop status changes, project filter, overdue highlighting |
+| Kanban Board | Drag-and-drop status changes, assignee/project/priority filters, overdue highlighting |
+| Notifications | `/api/notifications`, in-app bell with unread badge; triggers on assignment changes and `@mentions` in comments |
 
 There is **no auth yet**. The frontend uses a simple "acting as" user switcher
 (persisted in `localStorage`) so the dashboard and write actions can attribute

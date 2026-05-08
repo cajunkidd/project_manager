@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../prisma";
 import { HttpError } from "../middleware/error";
 import { logActivity } from "../lib/activity";
+import { notifyMentions } from "../lib/mentions";
 
 export const commentsRouter = Router();
 
@@ -42,6 +43,23 @@ commentsRouter.post("/", async (req, res) => {
     userId: data.userId,
     newValue: { taskId: data.taskId, projectId: data.projectId, body: data.body },
   });
+  if (data.taskId) {
+    await notifyMentions({
+      body: data.body,
+      authorId: data.userId,
+      title: "You were mentioned in a task comment",
+      entityType: "task",
+      entityId: data.taskId,
+    });
+  } else if (data.projectId) {
+    await notifyMentions({
+      body: data.body,
+      authorId: data.userId,
+      title: "You were mentioned in a project comment",
+      entityType: "project",
+      entityId: data.projectId,
+    });
+  }
   res.status(201).json(comment);
 });
 
