@@ -1,13 +1,13 @@
 // Internal Project Management Application — Prisma schema
-// Datasource is SQLite for local/dev/test ergonomics. Swap `provider` to
-// "postgresql" and update the URL to migrate to Postgres without code changes.
+// Datasource is PostgreSQL. The schema avoids provider-specific column types
+// (JSON-shaped data is stored as TEXT for portability and easier migration).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

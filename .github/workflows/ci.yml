@@ -8,8 +8,22 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: pmuser
+          POSTGRES_PASSWORD: pmpass
+          POSTGRES_DB: project_manager_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pmuser"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      DATABASE_URL: file:./test.db
+      DATABASE_URL: postgresql://pmuser:pmpass@localhost:5432/project_manager_test
       JWT_SECRET: ci-secret
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +33,8 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate
+        working-directory: backend
+      - run: npx prisma migrate deploy
         working-directory: backend
       - run: npm run test --workspace @project-manager/backend
 

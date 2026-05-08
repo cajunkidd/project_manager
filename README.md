@@ -26,28 +26,39 @@ This installs both workspaces.
 ## Run the app locally
 
 ```bash
-# 1. Initialize the dev SQLite database (one-time)
+# 1. Start Postgres (Docker Compose). This also provisions the test DB.
+docker compose up -d postgres
+
+# 2. Apply migrations against the dev DB
 cd backend
 cp .env.example .env
-npx prisma db push
+npx prisma migrate deploy
 
-# 2. Start the API on http://localhost:4000
+# 3. Start the API on http://localhost:4000
 npm run dev
 
-# 3. In a second terminal, start the frontend on http://localhost:5173
+# 4. In a second terminal, start the frontend on http://localhost:5173
 cd ../frontend
 npm run dev
 ```
 
 The Vite dev server proxies `/api/*` to `http://localhost:4000`.
 
+If you prefer a non-Docker Postgres, point `DATABASE_URL` at any
+PostgreSQL instance and run the same `prisma migrate deploy`.
+
 ## Run tests
 
 ```bash
 npm test                # both workspaces
-npm run test:backend    # backend only (Jest, integration against SQLite)
+npm run test:backend    # backend only (Jest, integration against Postgres)
 npm run test:frontend   # frontend only (Vitest, jsdom)
 ```
+
+The backend suite resets the test database via `prisma migrate reset`
+on every run; it expects `project_manager_test` to exist and to be
+reachable at the URL in `tests/setupEnv.ts`. The provided
+`docker-compose.yml` provisions it automatically.
 
 ## Roadmap status
 
