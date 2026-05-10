@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
+import { AttachmentsCard } from '../components/AttachmentsCard';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { RiskBadge } from '../components/RiskBadge';
 import { StatusBadge } from '../components/StatusBadge';
@@ -153,6 +154,8 @@ export function ProjectDetailPage() {
           }}
         />
       ) : null}
+
+      <AttachmentsCard projectId={project.id} />
 
       <div className="card">
         <h2 style={{ margin: '0 0 12px', fontSize: 16 }}>Tasks ({tasks.length})</h2>

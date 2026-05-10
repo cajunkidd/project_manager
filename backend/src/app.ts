@@ -4,6 +4,11 @@ import { errorHandler } from './middleware/errorHandler';
 import { aiRouter, projectAiRouter } from './modules/ai/ai.routes';
 import { apiTokensRouter } from './modules/api-tokens/api-tokens.routes';
 import { publicApiRouter } from './modules/api-tokens/public.routes';
+import {
+  attachmentsRouter,
+  projectAttachmentsRouter,
+  taskAttachmentsRouter,
+} from './modules/attachments/attachments.routes';
 import { automationsRouter } from './modules/automations/automations.routes';
 import { registerAutomationEngine } from './modules/automations/automations.engine';
 import { authRouter } from './modules/auth/auth.routes';
@@ -13,6 +18,7 @@ import {
   taskCommentsRouter,
 } from './modules/comments/comments.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
+import { taskDependenciesRouter } from './modules/dependencies/dependencies.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
@@ -35,7 +41,7 @@ export function createApp() {
   const app = express();
 
   app.use(cors());
-  app.use(express.json({ limit: '5mb' }));
+  app.use(express.json({ limit: '10mb' }));
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
@@ -48,6 +54,10 @@ export function createApp() {
   app.use('/api/projects/:id/comments', projectCommentsRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
+  app.use('/api/tasks/:id/attachments', taskAttachmentsRouter);
+  app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
+  app.use('/api/projects/:id/attachments', projectAttachmentsRouter);
+  app.use('/api/attachments', attachmentsRouter);
   app.use('/api/comments', commentsRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/notifications', notificationsRouter);

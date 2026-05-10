@@ -149,6 +149,36 @@ export interface AutomationAction {
   params: Record<string, unknown>;
 }
 
+export interface Attachment {
+  id: string;
+  taskId: string | null;
+  projectId: string | null;
+  uploadedById: string | null;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  createdAt: string;
+  uploadedBy?: { id: string; displayName: string; email: string } | null;
+}
+
+export interface TaskDependencyRef {
+  id: string;
+  createdAt: string;
+  task: {
+    id: string;
+    title: string;
+    status: TaskStatus;
+    priority: Priority;
+    dueDate: string | null;
+  };
+}
+
+export interface TaskDependencies {
+  dependencies: TaskDependencyRef[];
+  dependents: TaskDependencyRef[];
+  isBlocked: boolean;
+}
+
 export interface AutomationRule {
   id: string;
   name: string;

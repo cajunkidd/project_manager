@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { http } from '../api/client';
 import { tasksApi } from '../api/tasks';
+import { AttachmentsCard } from '../components/AttachmentsCard';
+import { DependenciesCard } from '../components/DependenciesCard';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Comment, Task, TaskStatus } from '../types';
@@ -117,6 +119,10 @@ export function TaskDetailPage() {
           </ul>
         </div>
       ) : null}
+
+      <DependenciesCard taskId={task.id} projectId={task.projectId} />
+
+      <AttachmentsCard taskId={task.id} />
 
       <div className="card">
         <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Comments</h2>

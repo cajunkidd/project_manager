@@ -35,6 +35,7 @@ model User {
   automationRules   AutomationRule[] @relation("AutomationCreator")
   apiTokens         ApiToken[]
   webhooks          WebhookSubscription[]
+  attachments       Attachment[]
 }
 
 model Project {
@@ -54,9 +55,10 @@ model Project {
 
   owner     User?     @relation("ProjectOwner", fields: [ownerId], references: [id])
   createdBy User?     @relation("ProjectCreator", fields: [createdById], references: [id])
-  tasks     Task[]
-  comments  Comment[]
-  forms     Form[]    @relation("FormDefaultProject")
+  tasks       Task[]
+  comments    Comment[]
+  forms       Form[]    @relation("FormDefaultProject")
+  attachments Attachment[]
 
   @@index([status])
   @@index([ownerId])
@@ -87,11 +89,47 @@ model Task {
   createdBy       User?            @relation("TaskCreator", fields: [createdById], references: [id])
   comments        Comment[]
   formSubmissions FormSubmission[] @relation("FormSubmissionTask")
+  attachments     Attachment[]
+  dependencies    TaskDependency[] @relation("TaskDependent")
+  dependents      TaskDependency[] @relation("TaskDependsOn")
 
   @@index([projectId])
   @@index([assignedToId])
   @@index([status])
   @@index([dueDate])
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  taskId       String?
+  projectId    String?
+  uploadedById String?
+  fileName     String
+  mimeType     String
+  fileSize     Int
+  content      String   // base64-encoded payload (small files only)
+  createdAt    DateTime @default(now())
+
+  task       Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedBy User?    @relation(fields: [uploadedById], references: [id])
+
+  @@index([taskId])
+  @@index([projectId])
+}
+
+model TaskDependency {
+  id               String   @id @default(uuid())
+  taskId           String
+  dependsOnTaskId  String
+  createdAt        DateTime @default(now())
+
+  task          Task @relation("TaskDependent", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTask Task @relation("TaskDependsOn", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnTaskId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
 }
 
 model Comment {

@@ -77,9 +77,16 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   (HMAC-SHA256) JSON payloads with delivery records (status, attempts,
   response body) for debugging. Admin Settings page provides token + webhook
   management with one-time secret reveal.
+- **Phase 6 — Attachments and task dependencies:** done. File attachments on
+  tasks and projects, with mime-type allowlist and a 5 MB size cap; binary
+  payload is stored base64-encoded in the database. Authenticated download
+  endpoint streams the original bytes with the correct filename. Task
+  dependencies expose a `blocked-by` / `blocks` graph with cycle detection,
+  and the task detail screen surfaces an `isBlocked` badge plus add/remove
+  controls. Attachments cascade on parent task/project delete.
 
-The whole platform is implemented and tested — 156 tests across both
-workspaces (122 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 168 tests across both
+workspaces (134 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.
