@@ -7,6 +7,7 @@ import { AITasksPage } from './pages/AITasksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ExecutiveSummaryPage } from './pages/ExecutiveSummaryPage';
 import { FormBuilderPage } from './pages/FormBuilderPage';
 import { FormsPage } from './pages/FormsPage';
 import { FormSubmitPage } from './pages/FormSubmitPage';
@@ -94,6 +95,14 @@ export function App() {
           element={
             <RequireAdmin>
               <ReportsPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="executive"
+          element={
+            <RequireAdmin>
+              <ExecutiveSummaryPage />
             </RequireAdmin>
           }
         />

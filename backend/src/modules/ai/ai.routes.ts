@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authMiddleware } from '../../middleware/auth';
+import { authMiddleware, requireRole } from '../../middleware/auth';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { aiService } from './ai.service';
 
@@ -19,6 +19,21 @@ aiRouter.post(
   asyncHandler(async (req, res) => {
     const { text } = extractSchema.parse(req.body);
     res.json({ tasks: aiService.extractTasks(text) });
+  }),
+);
+
+aiRouter.get(
+  '/executive-summary',
+  requireRole('admin', 'manager'),
+  asyncHandler(async (req, res) => {
+    const { windowDays, department } = req.query as Record<string, string>;
+    const days = windowDays ? Math.max(1, Math.min(60, Number(windowDays))) : undefined;
+    res.json(
+      await aiService.executiveSummary({
+        windowDays: days,
+        department: department || undefined,
+      }),
+    );
   }),
 );
 

@@ -14,6 +14,7 @@ const NAV = [
 ];
 
 const ADMIN_NAV = [
+  { to: '/executive', label: 'Executive Summary' },
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
   { to: '/automations', label: 'Automations' },

@@ -33,6 +33,43 @@ export interface ExtractedTask {
   reason?: string;
 }
 
+export interface ExecutiveProjectRow {
+  projectId: string;
+  name: string;
+  status: string;
+  department: string | null;
+  ownerName: string | null;
+  dueDate: string | null;
+  daysToDue: number | null;
+  risk: RiskScore;
+  totalTasks: number;
+  openTasks: number;
+  overdueTasks: number;
+  blockedTasks: number;
+  completedTasks: number;
+  loggedSeconds: number;
+  taskCompletionsThisWeek: number;
+  recentlyUpdatedAt: string;
+}
+
+export interface ExecutiveSummary {
+  generatedAt: string;
+  windowDays: number;
+  headline: string;
+  totals: {
+    activeProjects: number;
+    openTasks: number;
+    overdueTasks: number;
+    blockedTasks: number;
+    completedThisWeek: number;
+    loggedHoursThisWeek: number;
+  };
+  attention: ExecutiveProjectRow[]; // sorted by risk desc, top N
+  movers: ExecutiveProjectRow[];     // most completed this week
+  stalled: ExecutiveProjectRow[];    // active projects with no recent activity
+  byDepartment: { department: string; activeProjects: number; openTasks: number; overdueTasks: number }[];
+}
+
 export interface ProjectAIContext {
   project: {
     id: string;
