@@ -180,6 +180,31 @@ export interface ProjectDependencyEdge {
   dependsOnTaskId: string;
 }
 
+export type RecurringCadence = 'daily' | 'weekly' | 'monthly';
+
+export interface RecurringTaskTemplate {
+  id: string;
+  name: string;
+  title: string;
+  description: string | null;
+  projectId: string | null;
+  assigneeId: string | null;
+  priority: Priority;
+  cadence: RecurringCadence;
+  intervalCount: number;
+  dayOfWeek: number | null;
+  dayOfMonth: number | null;
+  hourOfDay: number;
+  dueOffsetDays: number;
+  nextRunAt: string;
+  lastRunAt: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string } | null;
+  assignee?: { id: string; displayName: string; email: string } | null;
+}
+
 export interface AttachmentSummary {
   id: string;
   fileName: string;

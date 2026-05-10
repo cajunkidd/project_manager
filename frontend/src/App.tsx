@@ -14,6 +14,7 @@ import { MyTasksPage } from './pages/MyTasksPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { RecurringTasksPage } from './pages/RecurringTasksPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -97,6 +98,14 @@ export function App() {
           element={
             <RequireAdmin>
               <WorkloadPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="recurring"
+          element={
+            <RequireAdmin>
+              <RecurringTasksPage />
             </RequireAdmin>
           }
         />

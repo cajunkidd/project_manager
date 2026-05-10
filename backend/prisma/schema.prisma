@@ -36,6 +36,8 @@ model User {
   apiTokens         ApiToken[]
   webhooks          WebhookSubscription[]
   attachments       Attachment[]
+  recurringTaskTemplates RecurringTaskTemplate[] @relation("RecurringTemplateCreator")
+  recurringDefaultAssignee RecurringTaskTemplate[] @relation("RecurringTemplateAssignee")
 }
 
 model Project {
@@ -59,6 +61,7 @@ model Project {
   comments  Comment[]
   forms     Form[]    @relation("FormDefaultProject")
   attachments Attachment[]
+  recurringTemplates RecurringTaskTemplate[]
 
   @@index([status])
   @@index([ownerId])
@@ -128,6 +131,35 @@ model TaskDependency {
   @@unique([taskId, dependsOnTaskId])
   @@index([taskId])
   @@index([dependsOnTaskId])
+}
+
+model RecurringTaskTemplate {
+  id              String   @id @default(uuid())
+  name            String
+  projectId       String?
+  title           String
+  description     String?
+  priority        String   @default("normal")
+  assigneeId      String?
+  cadence         String   // daily | weekly | monthly
+  intervalCount   Int      @default(1) // every N days/weeks/months
+  dayOfWeek       Int?     // 0-6 (Sun..Sat) for weekly
+  dayOfMonth      Int?     // 1-31 for monthly
+  hourOfDay       Int      @default(9) // 0-23, local server time
+  dueOffsetDays   Int      @default(0) // dueDate = run date + N days
+  nextRunAt       DateTime
+  lastRunAt       DateTime?
+  isActive        Boolean  @default(true)
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  assignee  User?    @relation("RecurringTemplateAssignee", fields: [assigneeId], references: [id])
+  createdBy User?    @relation("RecurringTemplateCreator", fields: [createdById], references: [id])
+
+  @@index([isActive, nextRunAt])
+  @@index([projectId])
 }
 
 model Attachment {
