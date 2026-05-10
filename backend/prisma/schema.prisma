@@ -38,6 +38,7 @@ model User {
   attachments       Attachment[]
   recurringTasks    RecurringTask[]    @relation("RecurringTaskCreator")
   recurringAssignee RecurringTask[]    @relation("RecurringTaskAssignee")
+  projectTemplates  ProjectTemplate[]  @relation("ProjectTemplateCreator")
 }
 
 model Project {
@@ -301,6 +302,38 @@ model WebhookDelivery {
 
   @@index([subscriptionId])
   @@index([status])
+}
+
+model ProjectTemplate {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  defaultPriority String   @default("normal")
+  department      String?
+  isActive        Boolean  @default(true)
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  createdBy User?                 @relation("ProjectTemplateCreator", fields: [createdById], references: [id])
+  tasks     ProjectTemplateTask[]
+
+  @@index([isActive])
+}
+
+model ProjectTemplateTask {
+  id            String   @id @default(uuid())
+  templateId    String
+  title         String
+  description   String?
+  priority      String   @default("normal")
+  dueOffsetDays Int      @default(0)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  template ProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
 }
 
 model RecurringTask {

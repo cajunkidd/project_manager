@@ -94,9 +94,18 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   notifications, webhooks, and automations all fire. Admin UI at
   `/recurring-tasks` lists, creates, pauses, resumes, deletes, and
   triggers the next run manually.
+- **Phase 8 — Project templates:** done. Reusable project blueprints
+  (name, description, default priority, department) plus an ordered list
+  of template tasks (title, description, priority, `dueOffsetDays`).
+  `POST /api/project-templates/:id/instantiate` creates a fresh project,
+  pre-populates it with the canned tasks (computing due dates from the
+  caller-supplied `startDate` plus each task's offset), and emits the
+  standard `project.created` / `task.created` events. Admin UI at
+  `/project-templates` lists, creates, updates, deletes templates, and
+  instantiates them straight into the Project Detail page.
 
-The whole platform is implemented and tested — 175 tests across both
-workspaces (141 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 180 tests across both
+workspaces (146 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.
