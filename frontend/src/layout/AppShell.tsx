@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { ActiveTimerPill } from '../components/ActiveTimerPill';
 import { NotificationsBell } from '../components/NotificationsBell';
 
 const NAV = [
@@ -56,6 +57,7 @@ export function AppShell() {
         <header className="topbar">
           <div className="muted">Internal Project Management</div>
           <div className="user-pill">
+            <ActiveTimerPill />
             <NotificationsBell />
             {user ? (
               <>

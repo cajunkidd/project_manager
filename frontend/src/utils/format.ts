@@ -50,6 +50,23 @@ export function formatDate(value: string | null | undefined): string {
   return d.toLocaleDateString();
 }
 
+export function formatDuration(seconds: number | null | undefined): string {
+  if (seconds == null || seconds <= 0) return '0m';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  if (m > 0) return s >= 30 ? `${m + 1}m` : `${m}m`;
+  return `${s}s`;
+}
+
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString();
+}
+
 export const TASK_STATUS_ORDER: TaskStatus[] = [
   'backlog',
   'to_do',

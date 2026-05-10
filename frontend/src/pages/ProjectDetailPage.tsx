@@ -6,6 +6,7 @@ import { projectTemplatesApi } from '../api/projectTemplates';
 import { tasksApi } from '../api/tasks';
 import { Attachments } from '../components/Attachments';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { ProjectTimeSummary } from '../components/ProjectTimeSummary';
 import { RiskBadge } from '../components/RiskBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Project, Task, TaskStatus } from '../types';
@@ -160,6 +161,8 @@ export function ProjectDetailPage() {
           </ul>
         </div>
       ) : null}
+
+      <ProjectTimeSummary projectId={project.id} />
 
       <Attachments scope={{ type: 'project', id: project.id }} />
 

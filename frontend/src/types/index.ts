@@ -180,6 +180,26 @@ export interface ProjectDependencyEdge {
   dependsOnTaskId: string;
 }
 
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  userId: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number | null;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: { id: string; displayName: string; email: string };
+  task?: { id: string; title: string; projectId: string | null };
+}
+
+export interface ProjectTimeSummary {
+  totalSeconds: number;
+  byUser: { user: { id: string; displayName: string; email: string }; seconds: number }[];
+  byTask: { task: { id: string; title: string }; seconds: number }[];
+}
+
 export interface ProjectTemplateTask {
   id: string;
   templateId: string;

@@ -33,6 +33,11 @@ import { projectTemplatesRouter } from './modules/project-templates/project-temp
 import { recurringRouter } from './modules/recurring/recurring.routes';
 import { registerRecurringScheduler } from './modules/recurring/recurring.scheduler';
 import { reportsRouter } from './modules/reports/reports.routes';
+import {
+  projectTimeSummaryRouter,
+  taskTimeEntriesRouter,
+  timeEntriesRouter,
+} from './modules/time-entries/time-entries.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
@@ -64,10 +69,13 @@ export function createApp() {
   app.use('/api/projects/:id/comments', projectCommentsRouter);
   app.use('/api/projects/:id/dependencies', projectDependenciesRouter);
   app.use('/api/projects/:id/attachments', projectAttachmentsRouter);
+  app.use('/api/projects/:id/time-summary', projectTimeSummaryRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
   app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
   app.use('/api/tasks/:id/attachments', taskAttachmentsRouter);
+  app.use('/api/tasks/:id/time-entries', taskTimeEntriesRouter);
+  app.use('/api/time-entries', timeEntriesRouter);
   app.use('/api/dependencies', dependenciesRouter);
   app.use('/api/attachments', attachmentsRouter);
   app.use('/api/comments', commentsRouter);

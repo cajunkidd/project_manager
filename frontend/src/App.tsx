@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { AppShell } from './layout/AppShell';
 import { NotificationsProvider } from './notifications/NotificationsContext';
+import { ActiveTimerProvider } from './timer/ActiveTimerContext';
 import { AITasksPage } from './pages/AITasksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
@@ -46,7 +47,9 @@ export function App() {
         element={
           <RequireAuth>
             <NotificationsProvider>
-              <AppShell />
+              <ActiveTimerProvider>
+                <AppShell />
+              </ActiveTimerProvider>
             </NotificationsProvider>
           </RequireAuth>
         }

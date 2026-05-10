@@ -6,6 +6,7 @@ import { Attachments } from '../components/Attachments';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import { TaskDependencies } from '../components/TaskDependencies';
+import { TaskTimeTracker } from '../components/TaskTimeTracker';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
@@ -107,6 +108,8 @@ export function TaskDetailPage() {
       ) : null}
 
       <TaskDependencies taskId={task.id} projectId={task.projectId} />
+
+      <TaskTimeTracker taskId={task.id} />
 
       <Attachments scope={{ type: 'task', id: task.id }} />
 
