@@ -16,6 +16,7 @@ const ADMIN_NAV = [
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
   { to: '/automations', label: 'Automations' },
+  { to: '/recurring-tasks', label: 'Recurring Tasks' },
   { to: '/settings', label: 'Settings' },
 ];
 

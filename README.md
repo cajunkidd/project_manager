@@ -84,9 +84,19 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   dependencies expose a `blocked-by` / `blocks` graph with cycle detection,
   and the task detail screen surfaces an `isBlocked` badge plus add/remove
   controls. Attachments cascade on parent task/project delete.
+- **Phase 7 — Recurring tasks:** done. Template-plus-cadence rules
+  (daily/weekly/monthly with an interval) that produce real tasks on a
+  schedule. The service exposes a `run-due` endpoint (admin/manager only)
+  that finds rules whose `nextRunAt <= now`, creates the corresponding
+  task with optional due-date offset, advances `nextRunAt`, and pauses
+  the rule once any configured `endAt` has passed. Generated tasks emit
+  the same `task.created` / `task.assigned` events used elsewhere, so
+  notifications, webhooks, and automations all fire. Admin UI at
+  `/recurring-tasks` lists, creates, pauses, resumes, deletes, and
+  triggers the next run manually.
 
-The whole platform is implemented and tested — 168 tests across both
-workspaces (134 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 175 tests across both
+workspaces (141 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

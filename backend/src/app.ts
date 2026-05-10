@@ -25,6 +25,7 @@ import { formsRouter } from './modules/forms/forms.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
+import { recurringTasksRouter } from './modules/recurring-tasks/recurring-tasks.routes';
 import { reportsRouter } from './modules/reports/reports.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
@@ -70,6 +71,7 @@ export function createApp() {
   app.use('/api/email', emailRouter);
   app.use('/api/api-tokens', apiTokensRouter);
   app.use('/api/webhooks', webhooksRouter);
+  app.use('/api/recurring-tasks', recurringTasksRouter);
 
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);
