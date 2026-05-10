@@ -29,6 +29,7 @@ import { formsRouter } from './modules/forms/forms.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
+import { projectTemplatesRouter } from './modules/project-templates/project-templates.routes';
 import { recurringRouter } from './modules/recurring/recurring.routes';
 import { registerRecurringScheduler } from './modules/recurring/recurring.scheduler';
 import { reportsRouter } from './modules/reports/reports.routes';
@@ -75,6 +76,7 @@ export function createApp() {
   app.use('/api/forms', formsRouter);
   app.use('/api/automations', automationsRouter);
   app.use('/api/recurring-tasks', recurringRouter);
+  app.use('/api/project-templates', projectTemplatesRouter);
   app.use('/api/reports', reportsRouter);
   app.use('/api/workload', workloadRouter);
   app.use('/api/ai', aiRouter);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
+import { projectTemplatesApi } from '../api/projectTemplates';
 import { tasksApi } from '../api/tasks';
 import { Attachments } from '../components/Attachments';
 import { PriorityBadge } from '../components/PriorityBadge';
@@ -72,6 +73,21 @@ export function ProjectDetailPage() {
           >
             Timeline
           </Link>
+          <button
+            className="btn btn-secondary"
+            onClick={async () => {
+              const name = prompt('Template name', `${project.name} template`);
+              if (!name) return;
+              try {
+                await projectTemplatesApi.snapshot(project.id, name);
+                alert(`Saved "${name}" as a project template.`);
+              } catch (e) {
+                alert((e as Error).message);
+              }
+            }}
+          >
+            Save as template
+          </button>
           <button className="btn" onClick={() => setShowNewTask((v) => !v)}>
             {showNewTask ? 'Cancel' : 'Add task'}
           </button>

@@ -38,6 +38,7 @@ model User {
   attachments       Attachment[]
   recurringTaskTemplates RecurringTaskTemplate[] @relation("RecurringTemplateCreator")
   recurringDefaultAssignee RecurringTaskTemplate[] @relation("RecurringTemplateAssignee")
+  projectTemplates ProjectTemplate[]
 }
 
 model Project {
@@ -160,6 +161,42 @@ model RecurringTaskTemplate {
 
   @@index([isActive, nextRunAt])
   @@index([projectId])
+}
+
+model ProjectTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  department  String?
+  defaultPriority String @default("normal")
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User?                 @relation(fields: [createdById], references: [id])
+  tasks     ProjectTemplateTask[]
+
+  @@index([createdAt])
+}
+
+model ProjectTemplateTask {
+  id              String   @id @default(uuid())
+  templateId      String
+  parentTemplateTaskId String?
+  title           String
+  description     String?
+  priority        String   @default("normal")
+  startOffsetDays Int?     // days from project startDate; null = no startDate
+  dueOffsetDays   Int?     // days from project startDate; null = no dueDate
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  template   ProjectTemplate     @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parent     ProjectTemplateTask? @relation("TemplateTaskTree", fields: [parentTemplateTaskId], references: [id], onDelete: Cascade)
+  subtasks   ProjectTemplateTask[] @relation("TemplateTaskTree")
+
+  @@index([templateId])
+  @@index([parentTemplateTaskId])
 }
 
 model Attachment {
