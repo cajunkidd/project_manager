@@ -13,6 +13,7 @@ const inboundSchema = z.object({
 
 const digestSchema = z.object({
   userId: z.string().uuid(),
+  date: z.string().datetime({ offset: true }).optional(),
 });
 
 export const emailRouter = Router();
@@ -33,8 +34,8 @@ emailRouter.post(
   '/digest',
   requireRole('admin', 'manager'),
   asyncHandler(async (req, res) => {
-    const { userId } = digestSchema.parse(req.body);
-    res.json(await emailService.dailyDigestForUser(userId));
+    const { userId, date } = digestSchema.parse(req.body);
+    res.json(await emailService.dailyDigestForUser(userId, date ? new Date(date) : undefined));
   }),
 );
 

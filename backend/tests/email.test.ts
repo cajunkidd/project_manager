@@ -66,17 +66,25 @@ describe('email integration', () => {
       const manager = await createTestUser({ role: 'manager', email: 'mgr@x.com' });
       const target = await createTestUser({ email: 'target@x.com', displayName: 'Target' });
 
-      const yesterday = new Date(Date.now() - 86400_000).toISOString();
+      // Pin the digest reference time to noon today so "due today task"
+      // (scheduled for 23:30 today) is unambiguously in the future relative
+      // to `now`, regardless of when the test happens to execute.
+      const reference = new Date();
+      reference.setHours(12, 0, 0, 0);
+
+      const yesterday = new Date(reference.getTime() - 86400_000).toISOString();
       await authed(manager)
         .post('/api/tasks')
         .send({ title: 'overdue task', assignedToId: target.id, dueDate: yesterday });
-      const today = new Date();
+      const today = new Date(reference);
       today.setHours(23, 30, 0, 0);
       await authed(manager)
         .post('/api/tasks')
         .send({ title: 'due today task', assignedToId: target.id, dueDate: today.toISOString() });
 
-      const res = await authed(manager).post('/api/email/digest').send({ userId: target.id });
+      const res = await authed(manager)
+        .post('/api/email/digest')
+        .send({ userId: target.id, date: reference.toISOString() });
       expect(res.body.counts.overdue).toBe(1);
       expect(res.body.counts.dueToday).toBe(1);
 
