@@ -16,6 +16,8 @@ export type TaskStatus =
 
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
+export type Recurrence = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
 export interface User {
   id: string;
   email: string;
@@ -81,6 +83,9 @@ export interface Task {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  recurrence: Recurrence | null;
+  recurrenceEndsAt: string | null;
+  recurrenceParentId: string | null;
   assignedTo?: { id: string; displayName: string; email: string } | null;
   project?: { id: string; name: string } | null;
   subtasks?: Task[];

@@ -14,6 +14,7 @@ const TASK_STATUSES = [
   'cancelled',
 ] as const;
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
+const RECURRENCES = ['daily', 'weekly', 'biweekly', 'monthly'] as const;
 
 const isoDate = z
   .string()
@@ -32,6 +33,8 @@ const createSchema = z.object({
   startDate: isoDate.nullable().optional(),
   dueDate: isoDate.nullable().optional(),
   sortOrder: z.number().int().optional(),
+  recurrence: z.enum(RECURRENCES).nullable().optional(),
+  recurrenceEndsAt: isoDate.nullable().optional(),
 });
 
 const updateSchema = createSchema.partial().extend({

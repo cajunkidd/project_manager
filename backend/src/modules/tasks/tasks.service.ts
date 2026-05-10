@@ -27,6 +27,8 @@ export interface CreateTaskInput {
   startDate?: Date | null;
   dueDate?: Date | null;
   sortOrder?: number;
+  recurrence?: string | null;
+  recurrenceEndsAt?: Date | null;
 }
 
 export type UpdateTaskInput = Partial<CreateTaskInput> & {

@@ -23,6 +23,7 @@ import { formsRouter } from './modules/forms/forms.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
+import { registerRecurrenceEngine } from './modules/recurrence/recurrence';
 import { reportsRouter } from './modules/reports/reports.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
@@ -35,6 +36,7 @@ export function createApp() {
   registerAutomationEngine();
   registerEmailListeners();
   registerWebhookDispatcher();
+  registerRecurrenceEngine();
 
   const app = express();
 

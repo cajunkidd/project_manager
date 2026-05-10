@@ -4,7 +4,7 @@ import { ApiError, http } from '../api/client';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
-import type { Comment, Task, TaskStatus } from '../types';
+import type { Comment, Recurrence, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
 const OPEN_STATUSES = new Set<TaskStatus>([
@@ -94,6 +94,14 @@ export function TaskDetailPage() {
     await tasksApi.removeDependency(depId);
     const fresh = await tasksApi.get(id);
     setTask(fresh);
+  }
+
+  async function changeRecurrence(value: Recurrence | '') {
+    if (!id) return;
+    const updated = await tasksApi.update(id, {
+      recurrence: value === '' ? null : value,
+    } as Partial<Task>);
+    setTask((prev) => (prev ? { ...prev, ...updated } : updated));
   }
 
   async function addComment(e: React.FormEvent) {
@@ -195,6 +203,35 @@ export function TaskDetailPage() {
           </ul>
         </div>
       ) : null}
+
+      <div className="card">
+        <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Recurrence</h2>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <select
+            aria-label="Recurrence"
+            value={task.recurrence ?? ''}
+            onChange={(e) => changeRecurrence(e.target.value as Recurrence | '')}
+            style={{ maxWidth: 200 }}
+          >
+            <option value="">Does not repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Every 2 weeks</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          {task.recurrence ? (
+            <span className="muted" style={{ fontSize: 13 }}>
+              A new task will be created automatically when this one is marked done.
+            </span>
+          ) : null}
+        </div>
+        {task.recurrenceParentId && task.recurrenceParentId !== task.id ? (
+          <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>
+            Part of a recurring series. Original task:{' '}
+            <Link to={`/tasks/${task.recurrenceParentId}`}>view source</Link>
+          </div>
+        ) : null}
+      </div>
 
       <div className="card">
         <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Depends on</h2>

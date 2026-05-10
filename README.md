@@ -84,9 +84,14 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   `/api/reports/blocked-by-deps` report. Task detail page surfaces blockers,
   what the task is blocking, a blocker picker that excludes itself and
   already-linked tasks, and an inline error when the API rejects a cycle or
-  self-dependency.
+  self-dependency. Recurring tasks: tasks can carry a recurrence cadence
+  (daily / weekly / biweekly / monthly) with an optional end date. When a
+  recurring task is moved to `done`, an internal listener clones it with a
+  new due date advanced by the cadence (preserving the start-date offset),
+  links it back to the original via `recurrenceParentId`, and stops once the
+  end date is exceeded.
 
-The platform is tested by 168 tests across both workspaces (142 backend
+The platform is tested by 175 tests across both workspaces (139 backend
 integration + 36 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
