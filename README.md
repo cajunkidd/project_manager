@@ -90,8 +90,16 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   new due date advanced by the cadence (preserving the start-date offset),
   links it back to the original via `recurrenceParentId`, and stops once the
   end date is exceeded.
+  Project templates: any project can be flagged `isTemplate`. Templates are
+  hidden from the default project list but surfaced under a "Templates" tab,
+  and any project can be cloned via `POST /api/projects/:id/clone`. Cloning
+  copies the task structure (with parent → subtask pointers remapped to the
+  new tasks), preserves priorities/assignments/recurrence settings, and
+  resets statuses to `to_do` and dates to null so the new project starts
+  fresh. Project detail page exposes Clone and Save-as-template buttons and
+  a "Template" pill badge.
 
-The platform is tested by 175 tests across both workspaces (139 backend
+The platform is tested by 180 tests across both workspaces (144 backend
 integration + 36 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in

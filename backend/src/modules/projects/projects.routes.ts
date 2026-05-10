@@ -22,10 +22,18 @@ const createSchema = z.object({
   department: z.string().nullable().optional(),
   startDate: isoDate.nullable().optional(),
   dueDate: isoDate.nullable().optional(),
+  isTemplate: z.boolean().optional(),
 });
 
 const updateSchema = createSchema.partial().extend({
   completedAt: isoDate.nullable().optional(),
+});
+
+const cloneSchema = z.object({
+  name: z.string().min(1).optional(),
+  ownerId: z.string().uuid().nullable().optional(),
+  department: z.string().nullable().optional(),
+  isTemplate: z.boolean().optional(),
 });
 
 export const projectsRouter = Router();
@@ -35,8 +43,21 @@ projectsRouter.use(authMiddleware);
 projectsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const { status, ownerId, department, priority, search } = req.query as Record<string, string>;
-    res.json(await projectsService.list({ status, ownerId, department, priority, search }));
+    const { status, ownerId, department, priority, search, isTemplate } = req.query as Record<
+      string,
+      string
+    >;
+    res.json(
+      await projectsService.list({
+        status,
+        ownerId,
+        department,
+        priority,
+        search,
+        isTemplate:
+          isTemplate === 'true' ? true : isTemplate === 'false' ? false : undefined,
+      }),
+    );
   }),
 );
 
@@ -66,6 +87,16 @@ projectsRouter.post(
   asyncHandler(async (req, res) => {
     const data = createSchema.parse(req.body);
     res.status(201).json(await projectsService.create(data, req.user?.id));
+  }),
+);
+
+projectsRouter.post(
+  '/:id/clone',
+  asyncHandler(async (req, res) => {
+    const data = cloneSchema.parse(req.body ?? {});
+    res
+      .status(201)
+      .json(await projectsService.clone(req.params.id, data, req.user?.id));
   }),
 );
 

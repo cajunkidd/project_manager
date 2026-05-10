@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
@@ -11,6 +11,7 @@ import { formatDate, isOverdue } from '../utils/format';
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [summary, setSummary] = useState<ProjectSummary | null>(null);
@@ -44,6 +45,23 @@ export function ProjectDetailPage() {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
   }
 
+  async function toggleTemplate() {
+    if (!project) return;
+    const updated = await projectsApi.update(project.id, {
+      isTemplate: !project.isTemplate,
+    });
+    setProject((prev) => (prev ? { ...prev, ...updated } : updated));
+  }
+
+  async function clone() {
+    if (!project) return;
+    const suggested = `${project.name.replace(/\s*\(template\)\s*$/i, '')} (copy)`;
+    const name = window.prompt('Name for the cloned project?', suggested);
+    if (!name) return;
+    const created = await projectsApi.clone(project.id, { name });
+    navigate(`/projects/${created.id}`);
+  }
+
   if (error) return <div className="error">{error}</div>;
   if (!project) return <div className="muted">Loading…</div>;
 
@@ -54,8 +72,18 @@ export function ProjectDetailPage() {
           <Link to="/projects" className="muted" style={{ fontSize: 13 }}>
             ← All projects
           </Link>
-          <h1 style={{ margin: '4px 0 0' }}>{project.name}</h1>
-          {risk ? (
+          <h1 style={{ margin: '4px 0 0' }}>
+            {project.name}
+            {project.isTemplate ? (
+              <span
+                className="badge"
+                style={{ marginLeft: 8, fontSize: 12, verticalAlign: 'middle' }}
+              >
+                Template
+              </span>
+            ) : null}
+          </h1>
+          {risk && !project.isTemplate ? (
             <div style={{ marginTop: 6 }}>
               <RiskBadge risk={risk} />
             </div>
@@ -71,6 +99,12 @@ export function ProjectDetailPage() {
           >
             Timeline
           </Link>
+          <button className="btn btn-secondary" onClick={clone}>
+            Clone
+          </button>
+          <button className="btn btn-secondary" onClick={toggleTemplate}>
+            {project.isTemplate ? 'Unmark template' : 'Save as template'}
+          </button>
           <button className="btn" onClick={() => setShowNewTask((v) => !v)}>
             {showNewTask ? 'Cancel' : 'Add task'}
           </button>

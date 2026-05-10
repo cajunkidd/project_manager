@@ -48,6 +48,7 @@ model Project {
   startDate   DateTime?
   dueDate     DateTime?
   completedAt DateTime?
+  isTemplate  Boolean   @default(false)
   createdById String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -61,6 +62,7 @@ model Project {
   @@index([status])
   @@index([ownerId])
   @@index([department])
+  @@index([isTemplate])
 }
 
 model Task {

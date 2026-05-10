@@ -10,12 +10,18 @@ export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [view, setView] = useState<'projects' | 'templates'>('projects');
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cloningId, setCloningId] = useState<string | null>(null);
 
   function reload() {
     projectsApi
-      .list({ search: search || undefined, status: statusFilter || undefined })
+      .list({
+        search: search || undefined,
+        status: statusFilter || undefined,
+        isTemplate: view === 'templates' ? 'true' : 'false',
+      })
       .then(setProjects)
       .catch((err) => setError(err.message));
   }
@@ -23,19 +29,51 @@ export function ProjectsPage() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  }, [search, statusFilter, view]);
+
+  async function cloneFromTemplate(project: Project) {
+    const suggested = `${project.name.replace(/\s*\(template\)\s*$/i, '')} — new`;
+    const name = window.prompt('Name for the new project?', suggested);
+    if (!name) return;
+    setCloningId(project.id);
+    try {
+      await projectsApi.clone(project.id, { name });
+      setView('projects');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clone project');
+    } finally {
+      setCloningId(null);
+    }
+  }
+
+  const isTemplates = view === 'templates';
 
   return (
     <div className="col">
       <div className="page-header">
-        <h1>Projects</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Cancel' : 'New project'}
-        </button>
+        <h1>{isTemplates ? 'Project templates' : 'Projects'}</h1>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className={`btn ${isTemplates ? 'btn-secondary' : ''}`}
+            onClick={() => setView('projects')}
+          >
+            Projects
+          </button>
+          <button
+            className={`btn ${isTemplates ? '' : 'btn-secondary'}`}
+            onClick={() => setView('templates')}
+          >
+            Templates
+          </button>
+          <button className="btn" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? 'Cancel' : isTemplates ? 'New template' : 'New project'}
+          </button>
+        </div>
       </div>
 
       {showForm ? (
         <NewProjectForm
+          asTemplate={isTemplates}
           onCreated={() => {
             setShowForm(false);
             reload();
@@ -46,37 +84,42 @@ export function ProjectsPage() {
       <div className="card">
         <div className="row" style={{ marginBottom: 12 }}>
           <input
-            placeholder="Search projects…"
+            placeholder={isTemplates ? 'Search templates…' : 'Search projects…'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ maxWidth: 320 }}
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{ maxWidth: 200 }}
-          >
-            <option value="">All statuses</option>
-            <option value="not_started">Not Started</option>
-            <option value="active">Active</option>
-            <option value="on_hold">On Hold</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          {isTemplates ? null : (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ maxWidth: 200 }}
+            >
+              <option value="">All statuses</option>
+              <option value="not_started">Not Started</option>
+              <option value="active">Active</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          )}
         </div>
         {error ? <div className="error">{error}</div> : null}
         {projects.length === 0 ? (
-          <div className="muted">No projects yet.</div>
+          <div className="muted">
+            {isTemplates ? 'No templates yet.' : 'No projects yet.'}
+          </div>
         ) : (
           <table>
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Status</th>
+                {isTemplates ? null : <th>Status</th>}
                 <th>Priority</th>
                 <th>Owner</th>
-                <th>Due</th>
+                {isTemplates ? null : <th>Due</th>}
                 <th>Tasks</th>
+                {isTemplates ? <th></th> : null}
               </tr>
             </thead>
             <tbody>
@@ -85,15 +128,29 @@ export function ProjectsPage() {
                   <td>
                     <Link to={`/projects/${p.id}`}>{p.name}</Link>
                   </td>
-                  <td>
-                    <StatusBadge status={p.status} />
-                  </td>
+                  {isTemplates ? null : (
+                    <td>
+                      <StatusBadge status={p.status} />
+                    </td>
+                  )}
                   <td>
                     <PriorityBadge priority={p.priority} />
                   </td>
                   <td className="muted">{p.owner?.displayName ?? '—'}</td>
-                  <td>{formatDate(p.dueDate)}</td>
+                  {isTemplates ? null : <td>{formatDate(p.dueDate)}</td>}
                   <td className="muted">{p._count?.tasks ?? 0}</td>
+                  {isTemplates ? (
+                    <td>
+                      <button
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 10px', fontSize: 12 }}
+                        onClick={() => cloneFromTemplate(p)}
+                        disabled={cloningId === p.id}
+                      >
+                        {cloningId === p.id ? 'Cloning…' : 'Use template'}
+                      </button>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -104,7 +161,13 @@ export function ProjectsPage() {
   );
 }
 
-function NewProjectForm({ onCreated }: { onCreated: () => void }) {
+function NewProjectForm({
+  asTemplate,
+  onCreated,
+}: {
+  asTemplate: boolean;
+  onCreated: () => void;
+}) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [department, setDepartment] = useState('');
@@ -118,6 +181,7 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
         name,
         description: description || null,
         department: department || null,
+        isTemplate: asTemplate,
       });
       onCreated();
     } catch (err) {
@@ -127,7 +191,9 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <div className="card">
-      <h2 style={{ margin: '0 0 12px', fontSize: 16 }}>New project</h2>
+      <h2 style={{ margin: '0 0 12px', fontSize: 16 }}>
+        {asTemplate ? 'New template' : 'New project'}
+      </h2>
       <form onSubmit={onSubmit} className="form-grid">
         <div className="full">
           <label htmlFor="name">Name</label>

@@ -10,6 +10,7 @@ export interface ProjectFilters {
   department?: string;
   priority?: string;
   search?: string;
+  isTemplate?: boolean;
 }
 
 export interface CreateProjectInput {
@@ -21,6 +22,14 @@ export interface CreateProjectInput {
   department?: string | null;
   startDate?: Date | null;
   dueDate?: Date | null;
+  isTemplate?: boolean;
+}
+
+export interface CloneProjectInput {
+  name?: string;
+  ownerId?: string | null;
+  department?: string | null;
+  isTemplate?: boolean;
 }
 
 export type UpdateProjectInput = Partial<CreateProjectInput> & {
@@ -34,6 +43,7 @@ export const projectsService = {
     if (filters.ownerId) where.ownerId = filters.ownerId;
     if (filters.department) where.department = filters.department;
     if (filters.priority) where.priority = filters.priority;
+    where.isTemplate = filters.isTemplate ?? false;
     if (filters.search) {
       where.OR = [
         { name: { contains: filters.search } },
@@ -109,6 +119,67 @@ export const projectsService = {
       action: 'deleted',
       userId: userId ?? null,
     });
+  },
+
+  async clone(sourceId: string, input: CloneProjectInput, userId?: string) {
+    const source = await this.getById(sourceId);
+    const sourceTasks = await prisma.task.findMany({
+      where: { projectId: sourceId },
+      orderBy: [{ parentTaskId: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    const project = await prisma.project.create({
+      data: {
+        name: input.name ?? `${source.name} (copy)`,
+        description: source.description,
+        ownerId: input.ownerId !== undefined ? input.ownerId : source.ownerId,
+        department:
+          input.department !== undefined ? input.department : source.department,
+        priority: source.priority,
+        status: 'not_started',
+        isTemplate: input.isTemplate ?? false,
+        createdById: userId ?? null,
+      },
+    });
+
+    // Clone tasks in dependency order (parents before children) so we can remap parentTaskId.
+    const idMap = new Map<string, string>();
+    const remaining = [...sourceTasks];
+    let safety = remaining.length * 2 + 1;
+    while (remaining.length > 0 && safety-- > 0) {
+      const t = remaining.shift()!;
+      if (t.parentTaskId && !idMap.has(t.parentTaskId)) {
+        // Parent not yet cloned — push to the back.
+        remaining.push(t);
+        continue;
+      }
+      const created = await prisma.task.create({
+        data: {
+          projectId: project.id,
+          parentTaskId: t.parentTaskId ? idMap.get(t.parentTaskId)! : null,
+          title: t.title,
+          description: t.description,
+          status: 'to_do',
+          priority: t.priority,
+          assignedToId: t.assignedToId,
+          createdById: userId ?? null,
+          sortOrder: t.sortOrder,
+          recurrence: t.recurrence,
+          recurrenceEndsAt: t.recurrenceEndsAt,
+        },
+      });
+      idMap.set(t.id, created.id);
+    }
+
+    await activityService.log({
+      entityType: 'project',
+      entityId: project.id,
+      action: 'cloned',
+      newValue: { sourceProjectId: sourceId, taskCount: idMap.size },
+      userId: userId ?? null,
+    });
+    await eventBus.emit({ type: 'project.created', project, actorId: userId ?? null });
+    return project;
   },
 
   async listTasks(projectId: string) {

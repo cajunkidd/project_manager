@@ -38,6 +38,7 @@ export interface Project {
   startDate: string | null;
   dueDate: string | null;
   completedAt: string | null;
+  isTemplate: boolean;
   createdAt: string;
   updatedAt: string;
   owner?: { id: string; displayName: string; email: string } | null;
