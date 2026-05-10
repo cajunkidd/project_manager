@@ -56,4 +56,5 @@ export interface ProjectAIContext {
   }[];
   recentComments: { body: string; createdAt: Date }[];
   lastActivityAt: Date;
+  dependencies: { taskId: string; dependsOnTaskId: string }[];
 }

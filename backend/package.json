@@ -13,7 +13,11 @@
     "test:coverage": "jest --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "prisma:postgres:build": "ts-node scripts/build-postgres-schema.ts",
+    "prisma:postgres:generate": "npm run prisma:postgres:build && prisma generate --schema prisma/schema.postgres.prisma",
+    "prisma:postgres:migrate": "npm run prisma:postgres:build && prisma migrate dev --schema prisma/schema.postgres.prisma",
+    "db:postgres:push": "npm run prisma:postgres:build && prisma db push --schema prisma/schema.postgres.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

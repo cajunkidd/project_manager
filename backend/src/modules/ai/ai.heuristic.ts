@@ -173,6 +173,17 @@ export function extractTasksFromText(input: string, now = new Date()): Extracted
   return tasks;
 }
 
+function tasksBlockedByDeps(ctx: ProjectAIContext) {
+  const byId = new Map(ctx.tasks.map((t) => [t.id, t] as const));
+  const blockedIds = new Set<string>();
+  for (const dep of ctx.dependencies) {
+    const blocker = byId.get(dep.dependsOnTaskId);
+    if (!blocker || blocker.status === 'done') continue;
+    blockedIds.add(dep.taskId);
+  }
+  return ctx.tasks.filter((t) => blockedIds.has(t.id) && t.status !== 'done');
+}
+
 export function summarizeProject(ctx: ProjectAIContext, now = new Date()): ProjectSummary {
   const open = ctx.tasks.filter((t) => (TASK_OPEN_STATUSES as readonly string[]).includes(t.status));
   const completed = ctx.tasks.filter((t) => t.status === 'done');
@@ -182,11 +193,17 @@ export function summarizeProject(ctx: ProjectAIContext, now = new Date()): Proje
   const blocked = ctx.tasks.filter((t) =>
     (TASK_BLOCKED_STATUSES as readonly string[]).includes(t.status),
   );
+  const depBlocked = tasksBlockedByDeps(ctx);
   const unassigned = open.filter((t) => !t.assignedToId);
 
   const recommendations: string[] = [];
   if (overdue.length) recommendations.push(`Resolve or reschedule ${overdue.length} overdue task(s).`);
   if (blocked.length) recommendations.push(`Unblock ${blocked.length} waiting task(s).`);
+  if (depBlocked.length) {
+    recommendations.push(
+      `${depBlocked.length} task(s) waiting on unfinished dependencies — clear blockers first.`,
+    );
+  }
   if (unassigned.length) recommendations.push(`Assign ${unassigned.length} task(s) without an owner.`);
   const daysSinceUpdate = Math.floor(
     (now.getTime() - ctx.lastActivityAt.getTime()) / DAY_MS,
@@ -241,6 +258,7 @@ export function scoreProjectRisk(ctx: ProjectAIContext, now = new Date()): RiskS
   const blocked = ctx.tasks.filter((t) =>
     (TASK_BLOCKED_STATUSES as readonly string[]).includes(t.status),
   );
+  const depBlocked = tasksBlockedByDeps(ctx);
   const unassigned = open.filter((t) => !t.assignedToId);
   const daysSinceUpdate = Math.floor(
     (now.getTime() - ctx.lastActivityAt.getTime()) / DAY_MS,
@@ -268,6 +286,15 @@ export function scoreProjectRisk(ctx: ProjectAIContext, now = new Date()): RiskS
       label: 'Blocked tasks',
       impact,
       detail: `${blocked.length} task(s) waiting on something.`,
+    });
+  }
+  if (depBlocked.length) {
+    const impact = Math.min(20, depBlocked.length * 4);
+    score += impact;
+    factors.push({
+      label: 'Missed dependencies',
+      impact,
+      detail: `${depBlocked.length} task(s) cannot start until upstream work finishes.`,
     });
   }
   if (unassigned.length) {

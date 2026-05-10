@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { http } from '../api/client';
 import { tasksApi } from '../api/tasks';
+import { Attachments } from '../components/Attachments';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { TaskDependencies } from '../components/TaskDependencies';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
@@ -103,6 +105,10 @@ export function TaskDetailPage() {
           <div style={{ whiteSpace: 'pre-wrap' }}>{task.description}</div>
         </div>
       ) : null}
+
+      <TaskDependencies taskId={task.id} projectId={task.projectId} />
+
+      <Attachments scope={{ type: 'task', id: task.id }} />
 
       {task.subtasks && task.subtasks.length > 0 ? (
         <div className="card">

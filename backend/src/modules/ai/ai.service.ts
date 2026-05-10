@@ -30,6 +30,10 @@ async function loadContext(projectId: string): Promise<ProjectAIContext> {
     take: 10,
     select: { body: true, createdAt: true },
   });
+  const dependencies = await prisma.taskDependency.findMany({
+    where: { task: { projectId } },
+    select: { taskId: true, dependsOnTaskId: true },
+  });
 
   const lastActivityCandidates: Date[] = [project.updatedAt];
   for (const t of tasks) lastActivityCandidates.push(t.updatedAt);
@@ -50,6 +54,7 @@ async function loadContext(projectId: string): Promise<ProjectAIContext> {
     tasks,
     recentComments,
     lastActivityAt,
+    dependencies,
   };
 }
 

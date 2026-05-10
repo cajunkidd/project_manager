@@ -13,6 +13,16 @@ import {
   taskCommentsRouter,
 } from './modules/comments/comments.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
+import {
+  dependenciesRouter,
+  projectDependenciesRouter,
+  taskDependenciesRouter,
+} from './modules/dependencies/dependencies.routes';
+import {
+  attachmentsRouter,
+  projectAttachmentsRouter,
+  taskAttachmentsRouter,
+} from './modules/attachments/attachments.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
@@ -35,7 +45,9 @@ export function createApp() {
   const app = express();
 
   app.use(cors());
-  app.use(express.json({ limit: '5mb' }));
+  // Body limit must accommodate the base64 inflation of attachment payloads
+  // (cap is ~5 MB raw, ~6.7 MB base64) plus normal API headroom.
+  app.use(express.json({ limit: '15mb' }));
 
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
@@ -46,8 +58,14 @@ export function createApp() {
   app.use('/api/users', usersRouter);
   app.use('/api/projects', projectsRouter);
   app.use('/api/projects/:id/comments', projectCommentsRouter);
+  app.use('/api/projects/:id/dependencies', projectDependenciesRouter);
+  app.use('/api/projects/:id/attachments', projectAttachmentsRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
+  app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
+  app.use('/api/tasks/:id/attachments', taskAttachmentsRouter);
+  app.use('/api/dependencies', dependenciesRouter);
+  app.use('/api/attachments', attachmentsRouter);
   app.use('/api/comments', commentsRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/notifications', notificationsRouter);

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { dependenciesApi } from '../api/dependencies';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
 import { StatusBadge } from '../components/StatusBadge';
-import type { Project, Task } from '../types';
+import type { Project, ProjectDependencyEdge, Task } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
 
 const DAY_MS = 86_400_000;
@@ -65,6 +66,7 @@ export function TimelinePage() {
   const projectId = params.get('projectId') ?? '';
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [deps, setDeps] = useState<ProjectDependencyEdge[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,17 +76,27 @@ export function TimelinePage() {
   useEffect(() => {
     if (!projectId) {
       setTasks([]);
+      setDeps([]);
       return;
     }
     tasksApi
       .list({ projectId })
       .then(setTasks)
       .catch((err) => setError(err.message));
+    dependenciesApi
+      .listForProject(projectId)
+      .then(setDeps)
+      .catch(() => setDeps([]));
   }, [projectId]);
 
   const window = useMemo(() => pickRange(tasks), [tasks]);
   const ticks = useMemo(() => axisTicks(window), [window]);
   const project = projects.find((p) => p.id === projectId) ?? null;
+  const taskIndex = useMemo(() => {
+    const map = new Map<string, number>();
+    tasks.forEach((t, i) => map.set(t.id, i));
+    return map;
+  }, [tasks]);
 
   return (
     <div className="col">
@@ -136,7 +148,7 @@ export function TimelinePage() {
                   ))}
                 </div>
               </div>
-              <div className="gantt">
+              <div className="gantt" style={{ position: 'relative' }}>
                 {tasks.map((task) => {
                   const bar = computeBar(task, window);
                   const overdue = isOverdue(task.dueDate, task.status);
@@ -168,11 +180,94 @@ export function TimelinePage() {
                     </div>
                   );
                 })}
+                <DependencyOverlay tasks={tasks} deps={deps} taskIndex={taskIndex} window={window} />
               </div>
             </>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+const ROW_HEIGHT = 28; // .gantt-row height
+const ROW_GAP = 4;     // .gantt gap
+const ROW_STRIDE = ROW_HEIGHT + ROW_GAP;
+const LABEL_COL = 220; // .gantt-row grid-template-columns first track
+const LABEL_GAP = 12;  // .gantt-row column gap
+
+function DependencyOverlay({
+  tasks,
+  deps,
+  taskIndex,
+  window,
+}: {
+  tasks: Task[];
+  deps: ProjectDependencyEdge[];
+  taskIndex: Map<string, number>;
+  window: TimelineWindow;
+}) {
+  if (!deps.length) return null;
+  const lines: { x1: number; y1: number; x2: number; y2: number; key: string }[] = [];
+  for (const d of deps) {
+    const fromIdx = taskIndex.get(d.dependsOnTaskId);
+    const toIdx = taskIndex.get(d.taskId);
+    if (fromIdx === undefined || toIdx === undefined) continue;
+    const fromTask = tasks[fromIdx];
+    const toTask = tasks[toIdx];
+    const fromBar = computeBar(fromTask, window);
+    const toBar = computeBar(toTask, window);
+    if (!fromBar || !toBar) continue;
+    // Right edge of blocker -> left edge of dependent. Use percentages
+    // for X (track is 100% wide) and pixels for Y (each row is 28px tall).
+    lines.push({
+      x1: fromBar.left + fromBar.width,
+      y1: fromIdx * ROW_STRIDE + ROW_HEIGHT / 2,
+      x2: toBar.left,
+      y2: toIdx * ROW_STRIDE + ROW_HEIGHT / 2,
+      key: d.id,
+    });
+  }
+  if (!lines.length) return null;
+  const totalHeight = tasks.length * ROW_STRIDE;
+  return (
+    <svg
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: LABEL_COL + LABEL_GAP,
+        right: 0,
+        height: totalHeight,
+        pointerEvents: 'none',
+      }}
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <marker
+          id="dep-arrow"
+          viewBox="0 0 6 6"
+          refX="5"
+          refY="3"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto"
+        >
+          <path d="M0,0 L6,3 L0,6 Z" fill="#888" />
+        </marker>
+      </defs>
+      {lines.map((l) => (
+        <line
+          key={l.key}
+          x1={`${l.x1}%`}
+          y1={l.y1}
+          x2={`${l.x2}%`}
+          y2={l.y2}
+          stroke="#888"
+          strokeWidth={1.2}
+          strokeDasharray="3 3"
+          markerEnd="url(#dep-arrow)"
+        />
+      ))}
+    </svg>
   );
 }

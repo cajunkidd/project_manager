@@ -78,8 +78,33 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   response body) for debugging. Admin Settings page provides token + webhook
   management with one-time secret reveal.
 
-The whole platform is implemented and tested — 156 tests across both
-workspaces (122 backend integration + 34 frontend unit).
+- **Phase 6 — Roadmap gap-fill:** done. Task dependencies (with cycle
+  detection, project-scoped listing, Gantt arrow overlay, and a
+  "missed dependencies" risk factor wired into AI risk scoring) and
+  attachments (per-task and per-project, base64 storage, MIME allow-list,
+  size cap, in-browser download).
 
-The schema swaps to PostgreSQL by changing `provider` in
-`backend/prisma/schema.prisma` and updating `DATABASE_URL`.
+The whole platform is implemented and tested — 169 tests across both
+workspaces (135 backend integration + 34 frontend unit).
+
+## Switching to PostgreSQL
+
+The default datasource is SQLite for zero-setup local development. To run
+against Postgres:
+
+```bash
+cd backend
+
+# 1. Point DATABASE_URL at your Postgres instance
+export DATABASE_URL="postgresql://user:password@localhost:5432/project_manager"
+
+# 2. Generate the Postgres-flavored schema + Prisma client
+npm run prisma:postgres:generate
+
+# 3. Apply the schema (use migrate for prod, push for quick dev iteration)
+npm run db:postgres:push        # or: npm run prisma:postgres:migrate
+```
+
+`prisma/schema.postgres.prisma` is auto-generated from `schema.prisma` by
+`scripts/build-postgres-schema.ts` — only the datasource block differs, so
+the same models work on both engines without code changes.

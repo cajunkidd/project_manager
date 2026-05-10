@@ -160,3 +160,34 @@ export interface AutomationRule {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface TaskDependencyEdge {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  task?: { id: string; title: string; status: TaskStatus; projectId: string | null };
+  dependsOn?: { id: string; title: string; status: TaskStatus; projectId: string | null };
+}
+
+export interface TaskDependencyView {
+  dependencies: TaskDependencyEdge[]; // tasks this task depends on
+  dependents: TaskDependencyEdge[]; // tasks that depend on this task
+}
+
+export interface ProjectDependencyEdge {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+}
+
+export interface AttachmentSummary {
+  id: string;
+  fileName: string;
+  mimeType: string | null;
+  fileSize: number;
+  taskId: string | null;
+  projectId: string | null;
+  uploadedById: string | null;
+  createdAt: string;
+  uploadedBy?: { id: string; displayName: string; email: string } | null;
+}

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
+import { Attachments } from '../components/Attachments';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { RiskBadge } from '../components/RiskBadge';
 import { StatusBadge } from '../components/StatusBadge';
@@ -143,6 +144,8 @@ export function ProjectDetailPage() {
           </ul>
         </div>
       ) : null}
+
+      <Attachments scope={{ type: 'project', id: project.id }} />
 
       {showNewTask ? (
         <NewTaskForm
