@@ -1,8 +1,10 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db/prisma';
 import { eventBus } from '../../events/bus';
-import { NotFoundError } from '../../utils/errors';
+import { ConflictError, NotFoundError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
+
+const OPEN_BLOCKER_STATUSES = ['backlog', 'to_do', 'in_progress', 'waiting', 'review'];
 
 export interface TaskFilters {
   status?: string;
@@ -70,6 +72,22 @@ export const tasksService = {
       include: {
         ...TASK_INCLUDE,
         subtasks: { include: TASK_INCLUDE },
+        dependencies: {
+          include: {
+            dependsOnTask: {
+              select: { id: true, title: true, status: true, priority: true, dueDate: true },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        dependents: {
+          include: {
+            task: {
+              select: { id: true, title: true, status: true, priority: true, dueDate: true },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
     if (!task) throw new NotFoundError('Task not found');
@@ -102,6 +120,17 @@ export const tasksService = {
 
   async update(id: string, input: UpdateTaskInput, userId?: string) {
     const before = await this.getById(id);
+
+    if (input.status === 'done' && before.status !== 'done') {
+      const openBlockers = await prisma.taskDependency.count({
+        where: { taskId: id, dependsOnTask: { status: { in: OPEN_BLOCKER_STATUSES } } },
+      });
+      if (openBlockers > 0) {
+        throw new ConflictError(
+          'Cannot mark task as done while dependencies are not complete',
+        );
+      }
+    }
 
     if (input.status === 'done' && !before.completedAt && input.completedAt === undefined) {
       input.completedAt = new Date();

@@ -77,9 +77,17 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   (HMAC-SHA256) JSON payloads with delivery records (status, attempts,
   response body) for debugging. Admin Settings page provides token + webhook
   management with one-time secret reveal.
+- **Phase 6 — Advanced project management (in progress):** task dependencies
+  shipped. `TaskDependency` join model with unique `(taskId, dependsOnTaskId)`
+  edges, cycle prevention (direct + indirect), `done`-transition guard that
+  refuses to complete tasks with open blockers, and a managers-only
+  `/api/reports/blocked-by-deps` report. Task detail page surfaces blockers,
+  what the task is blocking, a blocker picker that excludes itself and
+  already-linked tasks, and an inline error when the API rejects a cycle or
+  self-dependency.
 
-The whole platform is implemented and tested — 156 tests across both
-workspaces (122 backend integration + 34 frontend unit).
+The platform is tested by 168 tests across both workspaces (142 backend
+integration + 36 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

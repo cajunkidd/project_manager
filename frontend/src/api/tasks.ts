@@ -1,4 +1,4 @@
-import type { Task, TaskStatus } from '../types';
+import type { Task, TaskDependency, TaskDependent, TaskStatus } from '../types';
 import { http } from './client';
 
 export interface TaskListFilters {
@@ -26,4 +26,11 @@ export const tasksApi = {
   reorder: (items: { id: string; status: TaskStatus; sortOrder: number }[]) =>
     http.patch<{ updated: number }>('/tasks/reorder', { items }),
   remove: (id: string) => http.delete(`/tasks/${id}`),
+  listDependencies: (id: string) =>
+    http.get<{ dependencies: TaskDependency[]; dependents: TaskDependent[] }>(
+      `/tasks/${id}/dependencies`,
+    ),
+  addDependency: (id: string, dependsOnTaskId: string) =>
+    http.post<TaskDependency>(`/tasks/${id}/dependencies`, { dependsOnTaskId }),
+  removeDependency: (depId: string) => http.delete(`/dependencies/${depId}`),
 };

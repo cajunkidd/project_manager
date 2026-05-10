@@ -163,6 +163,40 @@ export const reportsService = {
       take: 200,
     });
   },
+
+  async tasksBlockedByDependencies(filters: ReportFilters = {}) {
+    const deps = await prisma.taskDependency.findMany({
+      where: {
+        task: {
+          ...taskBaseWhere(filters),
+          status: { in: TASK_OPEN_STATUSES },
+        },
+        dependsOnTask: { status: { in: TASK_OPEN_STATUSES } },
+      },
+      include: {
+        dependsOnTask: { select: { id: true, title: true, status: true } },
+        task: {
+          include: {
+            project: { select: { id: true, name: true } },
+            assignedTo: { select: { id: true, displayName: true, email: true } },
+          },
+        },
+      },
+    });
+    const byTask = new Map<
+      string,
+      {
+        task: (typeof deps)[number]['task'];
+        blockers: { id: string; title: string; status: string }[];
+      }
+    >();
+    for (const d of deps) {
+      const bucket = byTask.get(d.taskId) ?? { task: d.task, blockers: [] };
+      bucket.blockers.push(d.dependsOnTask);
+      byTask.set(d.taskId, bucket);
+    }
+    return Array.from(byTask.values());
+  },
 };
 
 export { TASK_OPEN_STATUSES, TASK_BLOCKED_STATUSES };

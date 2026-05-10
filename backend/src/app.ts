@@ -13,6 +13,10 @@ import {
   taskCommentsRouter,
 } from './modules/comments/comments.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
+import {
+  dependenciesRouter,
+  taskDependenciesRouter,
+} from './modules/dependencies/dependencies.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
@@ -48,6 +52,8 @@ export function createApp() {
   app.use('/api/projects/:id/comments', projectCommentsRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
+  app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
+  app.use('/api/dependencies', dependenciesRouter);
   app.use('/api/comments', commentsRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/notifications', notificationsRouter);

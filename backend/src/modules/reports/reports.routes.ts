@@ -66,3 +66,14 @@ reportsRouter.get(
     res.json(await reportsService.blockedTasks(parseFilters(req.query as Record<string, string>)));
   }),
 );
+
+reportsRouter.get(
+  '/blocked-by-deps',
+  asyncHandler(async (req, res) => {
+    res.json(
+      await reportsService.tasksBlockedByDependencies(
+        parseFilters(req.query as Record<string, string>),
+      ),
+    );
+  }),
+);

@@ -1,11 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { http } from '../api/client';
+import { ApiError, http } from '../api/client';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
+
+const OPEN_STATUSES = new Set<TaskStatus>([
+  'backlog',
+  'to_do',
+  'in_progress',
+  'waiting',
+  'review',
+]);
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,16 +21,22 @@ export function TaskDetailPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [pickerValue, setPickerValue] = useState('');
+  const [depError, setDepError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     if (!id) return;
     Promise.all([
       tasksApi.get(id),
       http.get<Comment[]>(`/tasks/${id}/comments`),
+      tasksApi.list(),
     ])
-      .then(([t, c]) => {
+      .then(([t, c, tasks]) => {
         setTask(t);
         setComments(c);
+        setAllTasks(tasks);
       })
       .catch((err) => setError(err.message));
   }, [id]);
@@ -33,8 +47,53 @@ export function TaskDetailPage() {
 
   async function changeStatus(status: TaskStatus) {
     if (!id) return;
-    const updated = await tasksApi.updateStatus(id, status);
-    setTask(updated);
+    setStatusError(null);
+    try {
+      const updated = await tasksApi.updateStatus(id, status);
+      setTask((prev) => (prev ? { ...prev, ...updated } : updated));
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : 'Failed to update status';
+      setStatusError(message);
+    }
+  }
+
+  const blockingTaskIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!task) return ids;
+    if (task.id) ids.add(task.id);
+    for (const d of task.dependencies ?? []) ids.add(d.dependsOnTaskId);
+    return ids;
+  }, [task]);
+
+  const openBlockers = useMemo(
+    () =>
+      (task?.dependencies ?? []).filter((d) => OPEN_STATUSES.has(d.dependsOnTask.status)),
+    [task],
+  );
+
+  async function addDependency(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id || !pickerValue) return;
+    setDepError(null);
+    try {
+      await tasksApi.addDependency(id, pickerValue);
+      setPickerValue('');
+      const fresh = await tasksApi.get(id);
+      setTask(fresh);
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : 'Failed to add dependency';
+      setDepError(message);
+    }
+  }
+
+  async function removeDependency(depId: string) {
+    if (!id) return;
+    setDepError(null);
+    await tasksApi.removeDependency(depId);
+    const fresh = await tasksApi.get(id);
+    setTask(fresh);
   }
 
   async function addComment(e: React.FormEvent) {
@@ -63,20 +122,39 @@ export function TaskDetailPage() {
           )}
           <h1 style={{ margin: '4px 0 0' }}>{task.title}</h1>
         </div>
-        <select
-          value={task.status}
-          onChange={(e) => changeStatus(e.target.value as TaskStatus)}
-          style={{ maxWidth: 180 }}
-        >
-          <option value="backlog">Backlog</option>
-          <option value="to_do">To Do</option>
-          <option value="in_progress">In Progress</option>
-          <option value="waiting">Waiting</option>
-          <option value="review">Review</option>
-          <option value="done">Done</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="col" style={{ gap: 4, alignItems: 'flex-end' }}>
+          <select
+            value={task.status}
+            onChange={(e) => changeStatus(e.target.value as TaskStatus)}
+            style={{ maxWidth: 180 }}
+          >
+            <option value="backlog">Backlog</option>
+            <option value="to_do">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="waiting">Waiting</option>
+            <option value="review">Review</option>
+            <option value="done">Done</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          {statusError ? (
+            <div className="error" style={{ fontSize: 12 }}>
+              {statusError}
+            </div>
+          ) : null}
+        </div>
       </div>
+
+      {openBlockers.length > 0 ? (
+        <div
+          className="subtle-card"
+          role="status"
+          style={{ borderLeft: '3px solid #c0392b' }}
+        >
+          <strong>Blocked by {openBlockers.length} open dependency
+            {openBlockers.length === 1 ? '' : 'ies'}</strong>{' '}
+          — this task cannot be marked done until all blockers are complete.
+        </div>
+      ) : null}
 
       <div className="grid cols-4">
         <div className="subtle-card">
@@ -117,6 +195,76 @@ export function TaskDetailPage() {
           </ul>
         </div>
       ) : null}
+
+      <div className="card">
+        <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Depends on</h2>
+        {(task.dependencies ?? []).length === 0 ? (
+          <div className="muted">No dependencies.</div>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {task.dependencies!.map((d) => (
+              <li
+                key={d.id}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}
+              >
+                <Link to={`/tasks/${d.dependsOnTask.id}`}>{d.dependsOnTask.title}</Link>
+                <StatusBadge status={d.dependsOnTask.status} />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ padding: '2px 8px', fontSize: 12 }}
+                  onClick={() => removeDependency(d.id)}
+                  aria-label={`Remove dependency on ${d.dependsOnTask.title}`}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <form
+          onSubmit={addDependency}
+          style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'flex-start' }}
+        >
+          <select
+            value={pickerValue}
+            onChange={(e) => setPickerValue(e.target.value)}
+            aria-label="Choose blocking task"
+            style={{ flex: 1, maxWidth: 360 }}
+          >
+            <option value="">Add a blocker…</option>
+            {allTasks
+              .filter((t) => !blockingTaskIds.has(t.id))
+              .map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                  {t.project ? ` — ${t.project.name}` : ''}
+                </option>
+              ))}
+          </select>
+          <button className="btn" type="submit" disabled={!pickerValue}>
+            Add
+          </button>
+        </form>
+        {depError ? (
+          <div className="error" style={{ marginTop: 8 }}>
+            {depError}
+          </div>
+        ) : null}
+        {(task.dependents ?? []).length > 0 ? (
+          <div style={{ marginTop: 16 }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 14 }}>Blocks</h3>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {task.dependents!.map((d) => (
+                <li key={d.id}>
+                  <Link to={`/tasks/${d.task.id}`}>{d.task.title}</Link>{' '}
+                  <StatusBadge status={d.task.status} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
 
       <div className="card">
         <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Comments</h2>

@@ -42,6 +42,30 @@ export interface Project {
   _count?: { tasks: number };
 }
 
+export interface TaskRef {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  priority: Priority;
+  dueDate: string | null;
+}
+
+export interface TaskDependency {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  createdAt: string;
+  dependsOnTask: TaskRef;
+}
+
+export interface TaskDependent {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  createdAt: string;
+  task: TaskRef;
+}
+
 export interface Task {
   id: string;
   projectId: string | null;
@@ -60,6 +84,8 @@ export interface Task {
   assignedTo?: { id: string; displayName: string; email: string } | null;
   project?: { id: string; name: string } | null;
   subtasks?: Task[];
+  dependencies?: TaskDependency[];
+  dependents?: TaskDependent[];
 }
 
 export interface Comment {

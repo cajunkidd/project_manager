@@ -87,11 +87,28 @@ model Task {
   createdBy       User?            @relation("TaskCreator", fields: [createdById], references: [id])
   comments        Comment[]
   formSubmissions FormSubmission[] @relation("FormSubmissionTask")
+  dependencies    TaskDependency[] @relation("TaskDependencyDependent")
+  dependents      TaskDependency[] @relation("TaskDependencyBlocker")
 
   @@index([projectId])
   @@index([assignedToId])
   @@index([status])
   @@index([dueDate])
+}
+
+model TaskDependency {
+  id                String   @id @default(uuid())
+  taskId            String
+  dependsOnTaskId   String
+  createdById       String?
+  createdAt         DateTime @default(now())
+
+  task        Task @relation("TaskDependencyDependent", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTask Task @relation("TaskDependencyBlocker", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnTaskId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
 }
 
 model Comment {
