@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './middleware/errorHandler';
+import { createRateLimiter, ipKey, tokenKey, userKey } from './middleware/rateLimit';
 import { aiRouter, projectAiRouter } from './modules/ai/ai.routes';
 import { apiTokensRouter } from './modules/api-tokens/api-tokens.routes';
 import { publicApiRouter } from './modules/api-tokens/public.routes';
@@ -53,6 +54,38 @@ export function createApp() {
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
   });
+
+  // Rate limiting (disabled in tests so the suite can hit endpoints freely;
+  // /api/health is also unlimited so liveness probes never trip a 429).
+  const limitsEnabled = process.env.NODE_ENV !== 'test';
+  if (limitsEnabled) {
+    const authLimiter = createRateLimiter({
+      windowMs: 60_000,
+      max: 30,
+      keyFn: ipKey,
+      message: 'Too many auth requests, slow down.',
+    });
+    const publicLimiter = createRateLimiter({
+      windowMs: 60_000,
+      max: 60,
+      keyFn: tokenKey,
+      message: 'Public API rate limit exceeded.',
+    });
+    const internalLimiter = createRateLimiter({
+      windowMs: 60_000,
+      max: 600,
+      keyFn: userKey,
+    });
+    app.use('/api/auth', authLimiter);
+    app.use('/api/v1', publicLimiter);
+    app.use('/api', (req, res, next) => {
+      if (req.path.startsWith('/auth') || req.path.startsWith('/v1') || req.path === '/health') {
+        next();
+        return;
+      }
+      internalLimiter(req, res, next);
+    });
+  }
 
   // Internal (JWT-authenticated) API
   app.use('/api/auth', authRouter);

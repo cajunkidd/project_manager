@@ -119,9 +119,17 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   result as CSV (with proper quote-doubling and comma-quoting) for
   compliance and offline review. Admin UI at `/audit` lists entries with
   the same filters and offers a one-click CSV download.
+- **Phase 11 — API rate limiting:** done. Fixed-window in-memory limiter
+  middleware applied per route group: `/api/auth` 30 req/min/IP (anti
+  brute-force), `/api/v1` 60 req/min/token (public API), and all other
+  internal endpoints 600 req/min/user. Responses include
+  `X-RateLimit-Limit/Remaining/Reset` headers; 429s carry `Retry-After`
+  and a JSON error. Limits are disabled when `NODE_ENV=test` so the
+  suite isn't throttled, with the middleware itself covered by direct
+  unit tests.
 
-The whole platform is implemented and tested — 190 tests across both
-workspaces (156 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 193 tests across both
+workspaces (159 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.
