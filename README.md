@@ -69,6 +69,30 @@ Environment overrides (optional, set before launching):
   string.
 - `DATABASE_URL` — point at a different SQLite file or a PostgreSQL
   database.
+- `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` — Google OAuth client credentials,
+  enables per-user Gmail connections.
+- `GMAIL_REDIRECT_URI` — defaults to `{host}/api/integrations/gmail/oauth/callback`.
+- `GMAIL_POLLER_ENABLED=1` — turn on the background Gmail label poller
+  (default off; set this in production to ingest emails as tasks).
+- `GMAIL_POLL_INTERVAL_MS` — poll interval, default `60000`.
+
+## Gmail integration (per-user OAuth)
+
+1. **Create a Google OAuth client** at <https://console.cloud.google.com/apis/credentials>
+   (Application type: Web application). Add the redirect URI:
+   `http://<host>:<port>/api/integrations/gmail/oauth/callback`.
+   Enable the Gmail API for the project.
+2. Set `GMAIL_CLIENT_ID` and `GMAIL_CLIENT_SECRET` in the launcher
+   environment (or in a `.env` file for the backend).
+3. Each user visits **Settings → Gmail → Connect** in the app. They
+   authorize the requested scopes (`gmail.modify`, `userinfo.email`),
+   and we store the resulting refresh token.
+4. Apply a Gmail label (default: `ProjectManager`) to any incoming
+   message you want turned into a task — either manually or via a Gmail
+   filter. With `GMAIL_POLLER_ENABLED=1` the backend polls every minute
+   and ingests labeled, unread messages, assigning the new tasks to the
+   connected user. Processed messages are marked read and the label
+   removed.
 
 ## Run tests
 

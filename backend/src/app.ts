@@ -23,6 +23,8 @@ import {
   integrationsRouter,
   intranetIntakeRouter,
 } from './modules/integrations/integrations.routes';
+import { gmailAuthedRouter, gmailPublicRouter } from './modules/integrations/gmail.routes';
+import { maybeAutoStartGmailPoller } from './modules/integrations/gmail.poller';
 import { registerTeamsDispatcher } from './modules/integrations/teams.dispatcher';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
@@ -40,6 +42,7 @@ export function createApp() {
   registerEmailListeners();
   registerWebhookDispatcher();
   registerTeamsDispatcher();
+  maybeAutoStartGmailPoller();
 
   const app = express();
 
@@ -69,10 +72,12 @@ export function createApp() {
   app.use('/api/email', emailRouter);
   app.use('/api/api-tokens', apiTokensRouter);
   app.use('/api/webhooks', webhooksRouter);
-  // Calendar feed and intranet intake use their own token mechanisms, so they
-  // are mounted BEFORE the JWT-protected integrations router.
+  // Calendar feed, intranet intake, and Gmail OAuth callback use their own
+  // token/auth mechanisms, so they mount BEFORE the JWT-protected router.
   app.use('/api/integrations', calendarFeedRouter);
   app.use('/api/integrations', intranetIntakeRouter);
+  app.use('/api/integrations', gmailPublicRouter);
+  app.use('/api/integrations', gmailAuthedRouter);
   app.use('/api/integrations', integrationsRouter);
 
   // Public (token-authenticated) API
