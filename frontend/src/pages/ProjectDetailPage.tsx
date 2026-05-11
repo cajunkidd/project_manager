@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
+import { BudgetCard } from '../components/BudgetCard';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { ProjectMembersCard } from '../components/ProjectMembersCard';
 import { RiskBadge } from '../components/RiskBadge';
@@ -168,6 +169,7 @@ export function ProjectDetailPage() {
       ) : null}
 
       <ProjectMembersCard projectId={project.id} />
+      <BudgetCard projectId={project.id} />
 
       <div className="card">
         <h2 style={{ margin: '0 0 12px', fontSize: 16 }}>Tasks ({tasks.length})</h2>

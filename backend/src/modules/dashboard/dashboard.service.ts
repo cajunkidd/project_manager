@@ -124,4 +124,34 @@ export const dashboardService = {
       blocked,
     };
   },
+
+  async forDepartment(department: string) {
+    const projects = await prisma.project.findMany({
+      where: { department },
+      include: { _count: { select: { tasks: true } } },
+      orderBy: { name: 'asc' },
+    });
+    const projectIds = projects.map((p) => p.id);
+    const tasks = projectIds.length
+      ? await prisma.task.findMany({
+          where: { projectId: { in: projectIds } },
+          include: {
+            project: { select: { id: true, name: true } },
+            assignedTo: { select: { id: true, displayName: true, email: true } },
+          },
+        })
+      : [];
+    const byStatus: Record<string, number> = {};
+    for (const t of tasks) byStatus[t.status] = (byStatus[t.status] ?? 0) + 1;
+    return {
+      department,
+      projects,
+      tasks,
+      counts: {
+        projects: projects.length,
+        tasks: tasks.length,
+        byStatus,
+      },
+    };
+  },
 };

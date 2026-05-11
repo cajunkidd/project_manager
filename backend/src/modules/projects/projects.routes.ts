@@ -23,6 +23,9 @@ const createSchema = z.object({
   department: z.string().nullable().optional(),
   startDate: isoDate.nullable().optional(),
   dueDate: isoDate.nullable().optional(),
+  portfolioId: z.string().uuid().nullable().optional(),
+  budgetAmount: z.number().nonnegative().nullable().optional(),
+  budgetCurrency: z.string().min(1).max(8).nullable().optional(),
 });
 
 const updateSchema = createSchema.partial().extend({

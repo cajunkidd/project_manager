@@ -87,9 +87,42 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   members and assignees. The frontend `RealtimeProvider` + `useLiveUpdates`
   hook auto-refreshes the dashboard, project list/detail, board, my-tasks,
   and task-detail pages when another user makes a change.
+- **Phase 7 — Advanced PM:** done.
+  - **Portfolios:** `Portfolio` model groups projects; rollup endpoint reports
+    project counts, total budget, status mix, and overdue count. Frontend
+    Portfolios list + detail pages.
+  - **Project templates:** `ProjectTemplate` stores a JSON snapshot of a
+    project's defaults plus its task tree (subtasks preserved). Save from an
+    existing project or POST a custom payload; instantiate creates a fresh
+    project with the captured task hierarchy. Admin Templates page.
+  - **Recurring tasks:** `RecurringTaskRule` (daily/weekly/monthly) auto-runs
+    every minute via a per-process scheduler; admins can also POST
+    `/api/recurring/run-due` to materialize on demand. Each due rule advances
+    `nextRunAt` and creates a task with the configured title/priority/assignee.
+  - **Task dependencies:** `TaskDependency` (blocker → blocked) with cycle
+    detection on add. Status transitions to `in_progress`/`review`/`done`
+    fail with `409` while open blockers exist. Frontend DependenciesCard on
+    task detail.
+  - **Budget tracking:** project-level `budgetAmount`/`budgetCurrency` fields
+    plus `BudgetEntry` (`planned`/`actual`) records. Rollup endpoint returns
+    budget vs. planned/actual/remaining/utilization. BudgetCard on project
+    detail.
+  - **Time tracking:** `TimeEntry` model logs minutes per user per task with
+    optional notes. Rollups per task (`/api/tasks/:id/time/rollup`) and
+    project (`/api/projects/:id/time/rollup`). Personal "My Time" page +
+    TimeTrackingCard on task detail.
+  - **Approval workflows:** `ApprovalRequest` (entity = task|project) with
+    optional `targetStatus` that's applied automatically on approval.
+    Managers/admins approve or reject; requesters can cancel. Approvals page
+    + "Request approval" buttons on task detail.
+  - **Department boards:** new
+    `/api/dashboard/department/:name` aggregation endpoint. Frontend
+    Department board page renders a kanban-style view of all tasks across
+    the department's projects + project rollup.
 
-The whole platform is implemented and tested — 168 tests across both
-workspaces (134 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 184 tests across both
+workspaces (150 backend integration + 34 frontend unit), plus a 21-check
+live E2E covering all advanced-PM features.
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

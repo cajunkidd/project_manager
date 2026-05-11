@@ -1,9 +1,12 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db/prisma';
 import { eventBus } from '../../events/bus';
-import { NotFoundError } from '../../utils/errors';
+import { ConflictError, NotFoundError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
+import { dependenciesService } from '../dependencies/dependencies.service';
 import { membersService, type AccessContext } from '../members/members.service';
+
+const BLOCKING_STATUSES = new Set(['in_progress', 'review', 'done']);
 
 export interface TaskFilters {
   status?: string;
@@ -144,6 +147,17 @@ export const tasksService = {
     }
     if (ctx && input.projectId && input.projectId !== before.projectId) {
       await membersService.ensureAccess(input.projectId, ctx, 'editor');
+    }
+
+    if (input.status && input.status !== before.status && BLOCKING_STATUSES.has(input.status)) {
+      const openBlockers = await dependenciesService.findOpenBlockers(id);
+      if (openBlockers.length > 0) {
+        throw new ConflictError(
+          `Cannot move to ${input.status} while blocked by: ${openBlockers
+            .map((b) => b.title)
+            .join(', ')}`,
+        );
+      }
     }
 
     if (input.status === 'done' && !before.completedAt && input.completedAt === undefined) {

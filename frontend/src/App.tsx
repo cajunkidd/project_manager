@@ -4,22 +4,29 @@ import { AppShell } from './layout/AppShell';
 import { NotificationsProvider } from './notifications/NotificationsContext';
 import { RealtimeProvider } from './realtime/RealtimeContext';
 import { AITasksPage } from './pages/AITasksPage';
+import { ApprovalsPage } from './pages/ApprovalsPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { DepartmentBoardPage } from './pages/DepartmentBoardPage';
 import { FormBuilderPage } from './pages/FormBuilderPage';
 import { FormsPage } from './pages/FormsPage';
 import { FormSubmitPage } from './pages/FormSubmitPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyTasksPage } from './pages/MyTasksPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { PortfolioDetailPage } from './pages/PortfolioDetailPage';
+import { PortfoliosPage } from './pages/PortfoliosPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { RecurringPage } from './pages/RecurringPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
+import { TemplatesPage } from './pages/TemplatesPage';
 import { TimelinePage } from './pages/TimelinePage';
+import { TimePage } from './pages/TimePage';
 import { WorkloadPage } from './pages/WorkloadPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -86,6 +93,34 @@ export function App() {
           }
         />
         <Route path="timeline" element={<TimelinePage />} />
+        <Route path="portfolios" element={<PortfoliosPage />} />
+        <Route path="portfolios/:id" element={<PortfolioDetailPage />} />
+        <Route path="approvals" element={<ApprovalsPage />} />
+        <Route path="time" element={<TimePage />} />
+        <Route
+          path="templates"
+          element={
+            <RequireAdmin>
+              <TemplatesPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="recurring"
+          element={
+            <RequireAdmin>
+              <RecurringPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="department"
+          element={
+            <RequireAdmin>
+              <DepartmentBoardPage />
+            </RequireAdmin>
+          }
+        />
         <Route path="ai/tasks" element={<AITasksPage />} />
         <Route
           path="reports"

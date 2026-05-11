@@ -22,6 +22,9 @@ export interface CreateProjectInput {
   department?: string | null;
   startDate?: Date | null;
   dueDate?: Date | null;
+  portfolioId?: string | null;
+  budgetAmount?: number | null;
+  budgetCurrency?: string | null;
 }
 
 export type UpdateProjectInput = Partial<CreateProjectInput> & {

@@ -12,17 +12,29 @@ import {
   projectCommentsRouter,
   taskCommentsRouter,
 } from './modules/comments/comments.routes';
+import { approvalsRouter } from './modules/approvals/approvals.routes';
+import { projectBudgetRouter } from './modules/budget/budget.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
+import { taskDependenciesRouter } from './modules/dependencies/dependencies.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
 import { projectMembersRouter } from './modules/members/members.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
+import { portfoliosRouter } from './modules/portfolios/portfolios.routes';
 import { projectsRouter } from './modules/projects/projects.routes';
 import { realtimeRouter } from './modules/realtime/realtime.routes';
 import { registerRealtimeListeners } from './modules/realtime/realtime.listeners';
+import { recurringRouter } from './modules/recurring/recurring.routes';
+import { startRecurringScheduler } from './modules/recurring/recurring.service';
 import { reportsRouter } from './modules/reports/reports.routes';
+import { templatesRouter } from './modules/templates/templates.routes';
+import {
+  myTimeRouter,
+  projectTimeRouter,
+  taskTimeRouter,
+} from './modules/time/time.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
@@ -35,6 +47,7 @@ export function createApp() {
   registerEmailListeners();
   registerWebhookDispatcher();
   registerRealtimeListeners();
+  startRecurringScheduler();
 
   const app = express();
 
@@ -51,7 +64,16 @@ export function createApp() {
   app.use('/api/projects', projectsRouter);
   app.use('/api/projects/:id/members', projectMembersRouter);
   app.use('/api/projects/:id/comments', projectCommentsRouter);
+  app.use('/api/projects/:id/budget', projectBudgetRouter);
+  app.use('/api/projects/:id/time', projectTimeRouter);
   app.use('/api/realtime', realtimeRouter);
+  app.use('/api/portfolios', portfoliosRouter);
+  app.use('/api/templates', templatesRouter);
+  app.use('/api/recurring', recurringRouter);
+  app.use('/api/approvals', approvalsRouter);
+  app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
+  app.use('/api/tasks/:id/time', taskTimeRouter);
+  app.use('/api/time', myTimeRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
   app.use('/api/comments', commentsRouter);

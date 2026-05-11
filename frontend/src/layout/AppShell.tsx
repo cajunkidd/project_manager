@@ -6,15 +6,21 @@ const NAV = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/my-tasks', label: 'My Tasks' },
   { to: '/projects', label: 'Projects' },
+  { to: '/portfolios', label: 'Portfolios' },
   { to: '/board', label: 'Board' },
   { to: '/timeline', label: 'Timeline' },
   { to: '/forms', label: 'Intake Forms' },
+  { to: '/approvals', label: 'Approvals' },
+  { to: '/time', label: 'Time' },
   { to: '/ai/tasks', label: 'AI Tasks' },
 ];
 
 const ADMIN_NAV = [
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
+  { to: '/department', label: 'Department board' },
+  { to: '/templates', label: 'Templates' },
+  { to: '/recurring', label: 'Recurring' },
   { to: '/automations', label: 'Automations' },
   { to: '/settings', label: 'Settings' },
 ];
@@ -48,7 +54,7 @@ export function AppShell() {
               </NavLink>
             ))
           : null}
-        <div className="footer">v0.5 — Phase 5</div>
+        <div className="footer">v0.7 — Advanced PM</div>
       </aside>
       <div className="main">
         <header className="topbar">

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { portfoliosApi } from '../api/advanced';
 import { projectsApi } from '../api/projects';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
@@ -107,9 +108,19 @@ export function ProjectsPage() {
 }
 
 function NewProjectForm({ onCreated }: { onCreated: () => void }) {
+  const [portfolios, setPortfolios] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    portfoliosApi
+      .list()
+      .then((list) => setPortfolios(list.map((p) => ({ id: p.id, name: p.name }))))
+      .catch(() => undefined);
+  }, []);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [department, setDepartment] = useState('');
+  const [portfolioId, setPortfolioId] = useState('');
+  const [budgetAmount, setBudgetAmount] = useState('');
+  const [budgetCurrency, setBudgetCurrency] = useState('USD');
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -120,6 +131,9 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
         name,
         description: description || null,
         department: department || null,
+        portfolioId: portfolioId || null,
+        budgetAmount: budgetAmount ? Number(budgetAmount) : null,
+        budgetCurrency: budgetAmount ? budgetCurrency : null,
       });
       onCreated();
     } catch (err) {
@@ -150,6 +164,40 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
             id="department"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="portfolio">Portfolio</label>
+          <select
+            id="portfolio"
+            value={portfolioId}
+            onChange={(e) => setPortfolioId(e.target.value)}
+          >
+            <option value="">None</option>
+            {portfolios.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="budget">Budget amount</label>
+          <input
+            id="budget"
+            type="number"
+            min="0"
+            step="0.01"
+            value={budgetAmount}
+            onChange={(e) => setBudgetAmount(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="currency">Currency</label>
+          <input
+            id="currency"
+            value={budgetCurrency}
+            onChange={(e) => setBudgetCurrency(e.target.value)}
           />
         </div>
         {error ? <div className="full error">{error}</div> : null}

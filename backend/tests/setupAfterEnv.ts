@@ -12,9 +12,16 @@ beforeEach(async () => {
   await prisma.notification.deleteMany();
   await prisma.activityLog.deleteMany();
   await prisma.comment.deleteMany();
+  await prisma.approvalRequest.deleteMany();
+  await prisma.timeEntry.deleteMany();
+  await prisma.budgetEntry.deleteMany();
+  await prisma.taskDependency.deleteMany();
+  await prisma.recurringTaskRule.deleteMany();
   await prisma.task.deleteMany();
   await prisma.projectMember.deleteMany();
   await prisma.project.deleteMany();
+  await prisma.portfolio.deleteMany();
+  await prisma.projectTemplate.deleteMany();
   await prisma.user.deleteMany();
 });
 

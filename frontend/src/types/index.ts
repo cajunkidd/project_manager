@@ -36,6 +36,9 @@ export interface Project {
   startDate: string | null;
   dueDate: string | null;
   completedAt: string | null;
+  portfolioId: string | null;
+  budgetAmount: number | null;
+  budgetCurrency: string | null;
   createdAt: string;
   updatedAt: string;
   owner?: { id: string; displayName: string; email: string } | null;
@@ -147,6 +150,134 @@ export interface AutomationCondition {
 export interface AutomationAction {
   type: AutomationActionType;
   params: Record<string, unknown>;
+}
+
+export interface Portfolio {
+  id: string;
+  name: string;
+  description: string | null;
+  ownerId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  owner?: { id: string; displayName: string; email: string } | null;
+  _count?: { projects: number };
+}
+
+export interface PortfolioRollup {
+  portfolioId: string;
+  total: number;
+  byStatus: Record<string, number>;
+  budgetTotal: number;
+  overdue: number;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  payload: string;
+  createdById: string | null;
+  createdAt: string;
+  createdBy?: { id: string; displayName: string; email: string } | null;
+}
+
+export type RecurringFrequency = 'daily' | 'weekly' | 'monthly';
+
+export interface RecurringTaskRule {
+  id: string;
+  name: string;
+  projectId: string | null;
+  templateTitle: string;
+  templateDesc: string | null;
+  templatePriority: Priority;
+  assignedToId: string | null;
+  frequency: RecurringFrequency;
+  nextRunAt: string;
+  isActive: boolean;
+  lastRunAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskDependencyBlocker {
+  id: string;
+  blockedTaskId: string;
+  blockerTaskId: string;
+  blockerTask: { id: string; title: string; status: TaskStatus };
+}
+
+export interface TaskDependencyBlocked {
+  id: string;
+  blockedTaskId: string;
+  blockerTaskId: string;
+  blockedTask: { id: string; title: string; status: TaskStatus };
+}
+
+export interface TaskDependencyGraph {
+  blockedBy: TaskDependencyBlocker[];
+  blocking: TaskDependencyBlocked[];
+}
+
+export type BudgetKind = 'planned' | 'actual';
+
+export interface BudgetEntry {
+  id: string;
+  projectId: string;
+  kind: BudgetKind;
+  amount: number;
+  description: string | null;
+  occurredAt: string;
+  createdBy?: { id: string; displayName: string; email: string } | null;
+}
+
+export interface BudgetRollup {
+  projectId: string;
+  currency: string;
+  budget: number | null;
+  planned: number;
+  actual: number;
+  remaining: number | null;
+  utilization: number | null;
+}
+
+export interface TimeEntry {
+  id: string;
+  taskId: string;
+  userId: string;
+  minutes: number;
+  notes: string | null;
+  occurredAt: string;
+  createdAt: string;
+  user?: { id: string; displayName: string; email: string };
+  task?: { id: string; title: string; projectId: string | null };
+}
+
+export interface TimeRollup {
+  taskId?: string;
+  projectId?: string;
+  totalMinutes: number;
+  byUser: Array<{ user: { id: string; displayName: string }; minutes: number }>;
+  byTask?: Array<{ task: { id: string; title: string }; minutes: number }>;
+}
+
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type ApprovalEntityType = 'task' | 'project';
+
+export interface ApprovalRequest {
+  id: string;
+  entityType: ApprovalEntityType;
+  entityId: string;
+  status: ApprovalStatus;
+  reason: string | null;
+  decisionNote: string | null;
+  targetStatus: string | null;
+  requestedById: string;
+  approverId: string | null;
+  decisionAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  requestedBy?: { id: string; displayName: string; email: string };
+  approver?: { id: string; displayName: string; email: string } | null;
 }
 
 export type ProjectMemberRole = 'owner' | 'editor' | 'viewer';

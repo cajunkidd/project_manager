@@ -20,3 +20,10 @@ dashboardRouter.get(
     res.json(await dashboardService.forManager());
   }),
 );
+
+dashboardRouter.get(
+  '/department/:name',
+  asyncHandler(async (req, res) => {
+    res.json(await dashboardService.forDepartment(req.params.name));
+  }),
+);

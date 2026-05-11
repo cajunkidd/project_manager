@@ -2,9 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { http } from '../api/client';
 import { tasksApi } from '../api/tasks';
+import { DependenciesCard } from '../components/DependenciesCard';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { TimeTrackingCard } from '../components/TimeTrackingCard';
 import { useLiveUpdates } from '../realtime/RealtimeContext';
+import { approvalsApi } from '../api/advanced';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
@@ -55,6 +58,22 @@ export function TaskDetailPage() {
     const created = await http.post<Comment>(`/tasks/${id}/comments`, { body });
     setComments((prev) => [...prev, created]);
     setBody('');
+  }
+
+  async function requestApproval(targetStatus: string) {
+    if (!id) return;
+    const reason = window.prompt(`Reason for requesting approval to ${targetStatus}?`) ?? '';
+    try {
+      await approvalsApi.request({
+        entityType: 'task',
+        entityId: id,
+        reason: reason || null,
+        targetStatus,
+      });
+      alert('Approval requested.');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed');
+    }
   }
 
   if (error) return <div className="error">{error}</div>;
@@ -115,6 +134,19 @@ export function TaskDetailPage() {
           <div style={{ whiteSpace: 'pre-wrap' }}>{task.description}</div>
         </div>
       ) : null}
+
+      <DependenciesCard taskId={task.id} />
+      <TimeTrackingCard taskId={task.id} />
+
+      <div className="card row" style={{ gap: 8 }}>
+        <span className="muted">Request approval to move task →</span>
+        <button className="btn btn-secondary" onClick={() => requestApproval('done')}>
+          done
+        </button>
+        <button className="btn btn-secondary" onClick={() => requestApproval('cancelled')}>
+          cancelled
+        </button>
+      </div>
 
       {task.subtasks && task.subtasks.length > 0 ? (
         <div className="card">
