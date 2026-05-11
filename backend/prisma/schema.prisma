@@ -274,3 +274,49 @@ model EmailLog {
 
   @@index([direction])
 }
+
+model ExternalSystem {
+  id          String   @id @default(uuid())
+  name        String
+  kind        String   // teams | outlook | erp | asset | intranet | monday | other
+  config      String   // JSON: webhook URL, link template, etc.
+  events      String?  // comma-separated event types this system listens to
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  links       ExternalLink[]
+
+  @@index([kind, isActive])
+}
+
+model ExternalLink {
+  id         String   @id @default(uuid())
+  systemId   String?
+  entityType String   // task | project
+  entityId   String
+  externalId String?
+  url        String?
+  label      String?
+  createdAt  DateTime @default(now())
+
+  system ExternalSystem? @relation(fields: [systemId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([systemId])
+}
+
+model ImportJob {
+  id          String    @id @default(uuid())
+  source      String    // monday | csv | other
+  status      String    // pending | running | success | failed
+  summary     String?   // JSON-encoded counts and ids
+  log         String?
+  createdById String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([source])
+  @@index([status])
+}

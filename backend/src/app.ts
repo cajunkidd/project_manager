@@ -18,6 +18,12 @@ import { dashboardRouter } from './modules/dashboard/dashboard.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
+import {
+  calendarFeedRouter,
+  integrationsRouter,
+  intranetIntakeRouter,
+} from './modules/integrations/integrations.routes';
+import { registerTeamsDispatcher } from './modules/integrations/teams.dispatcher';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
@@ -33,6 +39,7 @@ export function createApp() {
   registerAutomationEngine();
   registerEmailListeners();
   registerWebhookDispatcher();
+  registerTeamsDispatcher();
 
   const app = express();
 
@@ -62,6 +69,11 @@ export function createApp() {
   app.use('/api/email', emailRouter);
   app.use('/api/api-tokens', apiTokensRouter);
   app.use('/api/webhooks', webhooksRouter);
+  // Calendar feed and intranet intake use their own token mechanisms, so they
+  // are mounted BEFORE the JWT-protected integrations router.
+  app.use('/api/integrations', calendarFeedRouter);
+  app.use('/api/integrations', intranetIntakeRouter);
+  app.use('/api/integrations', integrationsRouter);
 
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);
