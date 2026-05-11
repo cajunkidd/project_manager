@@ -18,3 +18,4 @@ backend/*.db-journal
 
 # Launcher state
 .launcher-bootstrapped
+.jwt-secret
