@@ -22,6 +22,7 @@ import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
 import type { Project, Task, TaskStatus } from '../types';
 import { TASK_STATUS_ORDER, formatDate, isOverdue, taskStatusLabel } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
 
 export function BoardPage() {
   const [searchParams] = useSearchParams();
@@ -35,12 +36,19 @@ export function BoardPage() {
     projectsApi.list().then(setProjects).catch(() => undefined);
   }, []);
 
+  // Poll the task list so the board reflects edits made by other users.
+  // Pause while a card is being dragged so the optimistic move doesn't snap back.
+  const { data: polledTasks, error: pollError } = usePolling<Task[]>(
+    () => tasksApi.list({ projectId }),
+    [projectId],
+    { enabled: activeId === null },
+  );
   useEffect(() => {
-    tasksApi
-      .list({ projectId })
-      .then(setTasks)
-      .catch((err) => setError(err.message));
-  }, [projectId]);
+    if (polledTasks) setTasks(polledTasks);
+  }, [polledTasks]);
+  useEffect(() => {
+    if (pollError) setError(pollError.message);
+  }, [pollError]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 

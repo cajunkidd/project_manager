@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { http } from '../api/client';
 import { tasksApi } from '../api/tasks';
@@ -6,46 +6,48 @@ import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
+
+interface TaskDetailData {
+  task: Task;
+  comments: Comment[];
+}
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [task, setTask] = useState<Task | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
-  const reload = useCallback(() => {
-    if (!id) return;
-    Promise.all([
-      tasksApi.get(id),
-      http.get<Comment[]>(`/tasks/${id}/comments`),
-    ])
-      .then(([t, c]) => {
-        setTask(t);
-        setComments(c);
-      })
-      .catch((err) => setError(err.message));
-  }, [id]);
+  const { data, error, refresh } = usePolling<TaskDetailData | null>(
+    async () => {
+      if (!id) return null;
+      const [task, comments] = await Promise.all([
+        tasksApi.get(id),
+        http.get<Comment[]>(`/tasks/${id}/comments`),
+      ]);
+      return { task, comments };
+    },
+    [id],
+    { enabled: Boolean(id) },
+  );
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  const task = data?.task ?? null;
+  const comments = data?.comments ?? [];
 
   async function changeStatus(status: TaskStatus) {
     if (!id) return;
-    const updated = await tasksApi.updateStatus(id, status);
-    setTask(updated);
+    await tasksApi.updateStatus(id, status);
+    await refresh();
   }
 
   async function addComment(e: React.FormEvent) {
     e.preventDefault();
     if (!id || !body.trim()) return;
-    const created = await http.post<Comment>(`/tasks/${id}/comments`, { body });
-    setComments((prev) => [...prev, created]);
+    await http.post<Comment>(`/tasks/${id}/comments`, { body });
     setBody('');
+    await refresh();
   }
 
-  if (error) return <div className="error">{error}</div>;
+  if (error) return <div className="error">{error.message}</div>;
   if (!task) return <div className="muted">Loading…</div>;
 
   return (

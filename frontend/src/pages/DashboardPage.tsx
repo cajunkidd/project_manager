@@ -1,20 +1,15 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi, type UserDashboard } from '../api/dashboard';
+import { dashboardApi } from '../api/dashboard';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Task } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
 
 export function DashboardPage() {
-  const [data, setData] = useState<UserDashboard | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error } = usePolling(() => dashboardApi.me());
 
-  useEffect(() => {
-    dashboardApi.me().then(setData).catch((err) => setError(err.message));
-  }, []);
-
-  if (error) return <div className="error">{error}</div>;
+  if (error) return <div className="error">{error.message}</div>;
   if (!data) return <div className="muted">Loading…</div>;
 
   return (

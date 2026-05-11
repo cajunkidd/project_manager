@@ -5,6 +5,7 @@ import { tasksApi } from '../api/tasks';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Project, Task } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
 
 const DAY_MS = 86_400_000;
 
@@ -64,23 +65,17 @@ export function TimelinePage() {
   const [params, setParams] = useSearchParams();
   const projectId = params.get('projectId') ?? '';
   const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     projectsApi.list().then(setProjects).catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    if (!projectId) {
-      setTasks([]);
-      return;
-    }
-    tasksApi
-      .list({ projectId })
-      .then(setTasks)
-      .catch((err) => setError(err.message));
-  }, [projectId]);
+  const { data, error } = usePolling<Task[]>(
+    () => (projectId ? tasksApi.list({ projectId }) : Promise.resolve([])),
+    [projectId],
+    { enabled: Boolean(projectId) },
+  );
+  const tasks = data ?? [];
 
   const window = useMemo(() => pickRange(tasks), [tasks]);
   const ticks = useMemo(() => axisTicks(window), [window]);
@@ -109,7 +104,7 @@ export function TimelinePage() {
         </select>
       </div>
 
-      {error ? <div className="error">{error}</div> : null}
+      {error ? <div className="error">{error.message}</div> : null}
 
       {!project ? (
         <div className="card muted">Pick a project to see its timeline.</div>

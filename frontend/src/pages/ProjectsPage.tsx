@@ -1,29 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectsApi } from '../api/projects';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
 import type { Project } from '../types';
 import { formatDate } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
 
 export function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  function reload() {
-    projectsApi
-      .list({ search: search || undefined, status: statusFilter || undefined })
-      .then(setProjects)
-      .catch((err) => setError(err.message));
-  }
-
-  useEffect(() => {
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  const { data, error, refresh } = usePolling<Project[]>(
+    () => projectsApi.list({ search: search || undefined, status: statusFilter || undefined }),
+    [search, statusFilter],
+  );
+  const projects = data ?? [];
+  const reload = refresh;
 
   return (
     <div className="col">
@@ -64,7 +58,7 @@ export function ProjectsPage() {
             <option value="cancelled">Cancelled</option>
           </select>
         </div>
-        {error ? <div className="error">{error}</div> : null}
+        {error ? <div className="error">{error.message}</div> : null}
         {projects.length === 0 ? (
           <div className="muted">No projects yet.</div>
         ) : (

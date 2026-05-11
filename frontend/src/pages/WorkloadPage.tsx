@@ -2,29 +2,28 @@ import { useEffect, useState } from 'react';
 import { projectsApi } from '../api/projects';
 import { workloadApi, type WorkloadRow } from '../api/workload';
 import type { Project } from '../types';
+import { usePolling } from '../utils/usePolling';
 
 const OVERLOAD_THRESHOLD = 8;
 
 export function WorkloadPage() {
-  const [rows, setRows] = useState<WorkloadRow[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [department, setDepartment] = useState('');
   const [projectId, setProjectId] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     projectsApi.list().then(setProjects).catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    workloadApi
-      .list({
+  const { data, error } = usePolling<WorkloadRow[]>(
+    () =>
+      workloadApi.list({
         department: department || undefined,
         projectId: projectId || undefined,
-      })
-      .then(setRows)
-      .catch((err) => setError(err.message));
-  }, [department, projectId]);
+      }),
+    [department, projectId],
+  );
+  const rows = data ?? [];
 
   return (
     <div className="col">
@@ -53,7 +52,7 @@ export function WorkloadPage() {
             ))}
           </select>
         </div>
-        {error ? <div className="error">{error}</div> : null}
+        {error ? <div className="error">{error.message}</div> : null}
         {rows.length === 0 ? (
           <div className="muted">No active users.</div>
         ) : (

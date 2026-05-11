@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { tasksApi } from '../api/tasks';
 import { useAuth } from '../auth/AuthContext';
@@ -6,25 +6,30 @@ import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Task, TaskStatus } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
 
 export function MyTasksPage() {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-    tasksApi
-      .list({ assignedToId: user.id, search: search || undefined, status: statusFilter || undefined })
-      .then(setTasks)
-      .catch((err) => setError(err.message));
-  }, [user, search, statusFilter]);
+  const { data, error, refresh } = usePolling<Task[]>(
+    () =>
+      user
+        ? tasksApi.list({
+            assignedToId: user.id,
+            search: search || undefined,
+            status: statusFilter || undefined,
+          })
+        : Promise.resolve([]),
+    [user?.id, search, statusFilter],
+    { enabled: Boolean(user) },
+  );
+  const tasks = data ?? [];
 
   async function quickStatus(id: string, status: TaskStatus) {
-    const updated = await tasksApi.updateStatus(id, status);
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updated } : t)));
+    await tasksApi.updateStatus(id, status);
+    await refresh();
   }
 
   return (
@@ -54,7 +59,7 @@ export function MyTasksPage() {
             <option value="done">Done</option>
           </select>
         </div>
-        {error ? <div className="error">{error}</div> : null}
+        {error ? <div className="error">{error.message}</div> : null}
         {tasks.length === 0 ? (
           <div className="muted">No tasks match.</div>
         ) : (

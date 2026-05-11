@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
@@ -8,43 +8,46 @@ import { RiskBadge } from '../components/RiskBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Project, Task, TaskStatus } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
+import { usePolling } from '../utils/usePolling';
+
+interface ProjectDetailData {
+  project: Project;
+  tasks: Task[];
+  summary: ProjectSummary | null;
+  risk: RiskScore | null;
+}
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [summary, setSummary] = useState<ProjectSummary | null>(null);
-  const [risk, setRisk] = useState<RiskScore | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
 
-  const reload = useCallback(() => {
-    if (!id) return;
-    Promise.all([
-      projectsApi.get(id),
-      projectsApi.tasks(id),
-      aiApi.summarizeProject(id).catch(() => null),
-      aiApi.scoreProjectRisk(id).catch(() => null),
-    ])
-      .then(([p, ts, s, r]) => {
-        setProject(p);
-        setTasks(ts);
-        setSummary(s);
-        setRisk(r);
-      })
-      .catch((err) => setError(err.message));
-  }, [id]);
+  const { data, error, refresh } = usePolling<ProjectDetailData | null>(
+    async () => {
+      if (!id) return null;
+      const [project, tasks, summary, risk] = await Promise.all([
+        projectsApi.get(id),
+        projectsApi.tasks(id),
+        aiApi.summarizeProject(id).catch(() => null),
+        aiApi.scoreProjectRisk(id).catch(() => null),
+      ]);
+      return { project, tasks, summary, risk };
+    },
+    [id],
+    { enabled: Boolean(id) },
+  );
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  const project = data?.project ?? null;
+  const tasks = data?.tasks ?? [];
+  const summary = data?.summary ?? null;
+  const risk = data?.risk ?? null;
+  const reload = refresh;
 
   async function quickStatus(taskId: string, status: TaskStatus) {
-    const updated = await tasksApi.updateStatus(taskId, status);
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...updated } : t)));
+    await tasksApi.updateStatus(taskId, status);
+    await refresh();
   }
 
-  if (error) return <div className="error">{error}</div>;
+  if (error) return <div className="error">{error.message}</div>;
   if (!project) return <div className="muted">Loading…</div>;
 
   return (
