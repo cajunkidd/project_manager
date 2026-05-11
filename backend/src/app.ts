@@ -16,9 +16,12 @@ import { dashboardRouter } from './modules/dashboard/dashboard.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
+import { projectMembersRouter } from './modules/members/members.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
+import { realtimeRouter } from './modules/realtime/realtime.routes';
+import { registerRealtimeListeners } from './modules/realtime/realtime.listeners';
 import { reportsRouter } from './modules/reports/reports.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
 import { usersRouter } from './modules/users/users.routes';
@@ -31,6 +34,7 @@ export function createApp() {
   registerAutomationEngine();
   registerEmailListeners();
   registerWebhookDispatcher();
+  registerRealtimeListeners();
 
   const app = express();
 
@@ -45,7 +49,9 @@ export function createApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/projects', projectsRouter);
+  app.use('/api/projects/:id/members', projectMembersRouter);
   app.use('/api/projects/:id/comments', projectCommentsRouter);
+  app.use('/api/realtime', realtimeRouter);
   app.use('/api/tasks', tasksRouter);
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
   app.use('/api/comments', commentsRouter);

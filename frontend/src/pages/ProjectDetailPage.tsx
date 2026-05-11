@@ -4,8 +4,10 @@ import { aiApi, type ProjectSummary, type RiskScore } from '../api/ai';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { ProjectMembersCard } from '../components/ProjectMembersCard';
 import { RiskBadge } from '../components/RiskBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { useLiveUpdates } from '../realtime/RealtimeContext';
 import type { Project, Task, TaskStatus } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
 
@@ -38,6 +40,17 @@ export function ProjectDetailPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useLiveUpdates(
+    () => reload(),
+    {
+      types: ['project.updated', 'task.created', 'task.updated', 'task.status_changed'],
+      filter: (ev) => {
+        const data = ev.data as { projectId?: string | null };
+        return data.projectId === id;
+      },
+    },
+  );
 
   async function quickStatus(taskId: string, status: TaskStatus) {
     const updated = await tasksApi.updateStatus(taskId, status);
@@ -153,6 +166,8 @@ export function ProjectDetailPage() {
           }}
         />
       ) : null}
+
+      <ProjectMembersCard projectId={project.id} />
 
       <div className="card">
         <h2 style={{ margin: '0 0 12px', fontSize: 16 }}>Tasks ({tasks.length})</h2>

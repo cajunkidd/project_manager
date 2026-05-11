@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectsApi } from '../api/projects';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { useLiveUpdates } from '../realtime/RealtimeContext';
 import type { Project } from '../types';
 import { formatDate } from '../utils/format';
 
@@ -13,17 +14,18 @@ export function ProjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function reload() {
+  const reload = useCallback(() => {
     projectsApi
       .list({ search: search || undefined, status: statusFilter || undefined })
       .then(setProjects)
       .catch((err) => setError(err.message));
-  }
+  }, [search, statusFilter]);
 
   useEffect(() => {
     reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, statusFilter]);
+  }, [reload]);
+
+  useLiveUpdates(reload, { types: ['project.created', 'project.updated'] });
 
   return (
     <div className="col">

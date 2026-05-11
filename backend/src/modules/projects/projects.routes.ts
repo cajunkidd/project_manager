@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authMiddleware } from '../../middleware/auth';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { UnauthorizedError } from '../../utils/errors';
 import { projectsService } from './projects.service';
 
 const PROJECT_STATUSES = ['not_started', 'active', 'on_hold', 'completed', 'cancelled'] as const;
@@ -28,6 +29,11 @@ const updateSchema = createSchema.partial().extend({
   completedAt: isoDate.nullable().optional(),
 });
 
+function ctxFromReq(req: { user?: { id: string; role: string } }) {
+  if (!req.user) throw new UnauthorizedError();
+  return { userId: req.user.id, globalRole: req.user.role };
+}
+
 export const projectsRouter = Router();
 
 projectsRouter.use(authMiddleware);
@@ -36,28 +42,33 @@ projectsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const { status, ownerId, department, priority, search } = req.query as Record<string, string>;
-    res.json(await projectsService.list({ status, ownerId, department, priority, search }));
+    res.json(
+      await projectsService.list(
+        { status, ownerId, department, priority, search },
+        ctxFromReq(req),
+      ),
+    );
   }),
 );
 
 projectsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await projectsService.getById(req.params.id));
+    res.json(await projectsService.getById(req.params.id, ctxFromReq(req)));
   }),
 );
 
 projectsRouter.get(
   '/:id/tasks',
   asyncHandler(async (req, res) => {
-    res.json(await projectsService.listTasks(req.params.id));
+    res.json(await projectsService.listTasks(req.params.id, ctxFromReq(req)));
   }),
 );
 
 projectsRouter.get(
   '/:id/activity',
   asyncHandler(async (req, res) => {
-    res.json(await projectsService.listActivity(req.params.id));
+    res.json(await projectsService.listActivity(req.params.id, ctxFromReq(req)));
   }),
 );
 
@@ -73,14 +84,14 @@ projectsRouter.patch(
   '/:id',
   asyncHandler(async (req, res) => {
     const data = updateSchema.parse(req.body);
-    res.json(await projectsService.update(req.params.id, data, req.user?.id));
+    res.json(await projectsService.update(req.params.id, data, req.user?.id, ctxFromReq(req)));
   }),
 );
 
 projectsRouter.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    await projectsService.remove(req.params.id, req.user?.id);
+    await projectsService.remove(req.params.id, req.user?.id, ctxFromReq(req));
     res.status(204).send();
   }),
 );

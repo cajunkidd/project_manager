@@ -3,6 +3,7 @@ import { prisma } from '../../db/prisma';
 import { eventBus } from '../../events/bus';
 import { NotFoundError } from '../../utils/errors';
 import { activityService } from '../activity/activity.service';
+import { membersService, type AccessContext } from '../members/members.service';
 
 export interface TaskFilters {
   status?: string;
@@ -42,8 +43,24 @@ const TASK_INCLUDE = {
   project: { select: { id: true, name: true } },
 } as const;
 
+async function ensureTaskAccess(
+  taskId: string,
+  ctx: AccessContext,
+  minRole: 'viewer' | 'editor' = 'viewer',
+): Promise<{ projectId: string | null }> {
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { projectId: true },
+  });
+  if (!task) throw new NotFoundError('Task not found');
+  if (task.projectId) {
+    await membersService.ensureAccess(task.projectId, ctx, minRole);
+  }
+  return task;
+}
+
 export const tasksService = {
-  async list(filters: TaskFilters = {}) {
+  async list(filters: TaskFilters = {}, ctx?: AccessContext) {
     const where: Prisma.TaskWhereInput = {};
     if (filters.status) where.status = filters.status;
     if (filters.assignedToId) where.assignedToId = filters.assignedToId;
@@ -57,6 +74,20 @@ export const tasksService = {
         { description: { contains: filters.search } },
       ];
     }
+    if (ctx) {
+      const accessible = await membersService.accessibleProjectIds(ctx);
+      if (accessible !== 'ALL') {
+        // Standalone tasks (projectId = null) stay visible; restrict project tasks.
+        const accessFilter: Prisma.TaskWhereInput = {
+          OR: [{ projectId: null }, { projectId: { in: accessible } }],
+        };
+        where.AND = where.AND
+          ? Array.isArray(where.AND)
+            ? [...where.AND, accessFilter]
+            : [where.AND, accessFilter]
+          : [accessFilter];
+      }
+    }
     return prisma.task.findMany({
       where,
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
@@ -64,7 +95,7 @@ export const tasksService = {
     });
   },
 
-  async getById(id: string) {
+  async getById(id: string, ctx?: AccessContext) {
     const task = await prisma.task.findUnique({
       where: { id },
       include: {
@@ -73,10 +104,16 @@ export const tasksService = {
       },
     });
     if (!task) throw new NotFoundError('Task not found');
+    if (ctx && task.projectId) {
+      await membersService.ensureAccess(task.projectId, ctx);
+    }
     return task;
   },
 
-  async create(input: CreateTaskInput, userId?: string) {
+  async create(input: CreateTaskInput, userId?: string, ctx?: AccessContext) {
+    if (ctx && input.projectId) {
+      await membersService.ensureAccess(input.projectId, ctx, 'editor');
+    }
     const task = await prisma.task.create({
       data: { ...input, createdById: userId ?? null },
       include: TASK_INCLUDE,
@@ -100,8 +137,14 @@ export const tasksService = {
     return task;
   },
 
-  async update(id: string, input: UpdateTaskInput, userId?: string) {
+  async update(id: string, input: UpdateTaskInput, userId?: string, ctx?: AccessContext) {
     const before = await this.getById(id);
+    if (ctx && before.projectId) {
+      await membersService.ensureAccess(before.projectId, ctx, 'editor');
+    }
+    if (ctx && input.projectId && input.projectId !== before.projectId) {
+      await membersService.ensureAccess(input.projectId, ctx, 'editor');
+    }
 
     if (input.status === 'done' && !before.completedAt && input.completedAt === undefined) {
       input.completedAt = new Date();
@@ -171,12 +214,15 @@ export const tasksService = {
     return updated;
   },
 
-  async updateStatus(id: string, status: string, userId?: string) {
-    return this.update(id, { status }, userId);
+  async updateStatus(id: string, status: string, userId?: string, ctx?: AccessContext) {
+    return this.update(id, { status }, userId, ctx);
   },
 
-  async remove(id: string, userId?: string) {
-    await this.getById(id);
+  async remove(id: string, userId?: string, ctx?: AccessContext) {
+    const existing = await this.getById(id);
+    if (ctx && existing.projectId) {
+      await membersService.ensureAccess(existing.projectId, ctx, 'editor');
+    }
     await prisma.task.delete({ where: { id } });
     await activityService.log({
       entityType: 'task',
@@ -186,7 +232,12 @@ export const tasksService = {
     });
   },
 
-  async reorder(items: ReorderInput[], userId?: string) {
+  async reorder(items: ReorderInput[], userId?: string, ctx?: AccessContext) {
+    if (ctx) {
+      for (const item of items) {
+        await ensureTaskAccess(item.id, ctx, 'editor');
+      }
+    }
     await prisma.$transaction(
       items.map((item) =>
         prisma.task.update({
@@ -209,8 +260,8 @@ export const tasksService = {
     return { updated: items.length };
   },
 
-  async listActivity(taskId: string) {
-    await this.getById(taskId);
+  async listActivity(taskId: string, ctx?: AccessContext) {
+    await this.getById(taskId, ctx);
     return activityService.listForEntity('task', taskId);
   },
 };

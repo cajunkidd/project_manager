@@ -15,11 +15,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { useLiveUpdates } from '../realtime/RealtimeContext';
 import type { Project, Task, TaskStatus } from '../types';
 import { TASK_STATUS_ORDER, formatDate, isOverdue, taskStatusLabel } from '../utils/format';
 
@@ -35,12 +36,25 @@ export function BoardPage() {
     projectsApi.list().then(setProjects).catch(() => undefined);
   }, []);
 
-  useEffect(() => {
+  const reloadTasks = useCallback(() => {
     tasksApi
       .list({ projectId })
       .then(setTasks)
       .catch((err) => setError(err.message));
   }, [projectId]);
+
+  useEffect(() => {
+    reloadTasks();
+  }, [reloadTasks]);
+
+  useLiveUpdates(reloadTasks, {
+    types: ['task.created', 'task.updated', 'task.status_changed'],
+    filter: (ev) => {
+      if (!projectId) return true;
+      const data = ev.data as { projectId?: string | null };
+      return data.projectId === projectId;
+    },
+  });
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 

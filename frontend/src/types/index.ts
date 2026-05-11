@@ -149,6 +149,17 @@ export interface AutomationAction {
   params: Record<string, unknown>;
 }
 
+export type ProjectMemberRole = 'owner' | 'editor' | 'viewer';
+
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: ProjectMemberRole;
+  createdAt: string;
+  user: { id: string; displayName: string; email: string };
+}
+
 export interface AutomationRule {
   id: string;
   name: string;

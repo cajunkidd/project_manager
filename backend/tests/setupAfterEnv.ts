@@ -13,6 +13,7 @@ beforeEach(async () => {
   await prisma.activityLog.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.task.deleteMany();
+  await prisma.projectMember.deleteMany();
   await prisma.project.deleteMany();
   await prisma.user.deleteMany();
 });

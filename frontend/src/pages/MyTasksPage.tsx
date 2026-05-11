@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { tasksApi } from '../api/tasks';
 import { useAuth } from '../auth/AuthContext';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { useLiveUpdates } from '../realtime/RealtimeContext';
 import type { Task, TaskStatus } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
 
@@ -14,13 +15,27 @@ export function MyTasksPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!user) return;
     tasksApi
       .list({ assignedToId: user.id, search: search || undefined, status: statusFilter || undefined })
       .then(setTasks)
       .catch((err) => setError(err.message));
   }, [user, search, statusFilter]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  useLiveUpdates(reload, {
+    types: ['task.created', 'task.updated', 'task.status_changed', 'task.assigned'],
+    filter: (ev) => {
+      if (!user) return false;
+      const data = ev.data as { assigneeId?: string };
+      // Refresh broadly for tasks that mention this user, or just always.
+      return data.assigneeId === undefined || data.assigneeId === user.id;
+    },
+  });
 
   async function quickStatus(id: string, status: TaskStatus) {
     const updated = await tasksApi.updateStatus(id, status);

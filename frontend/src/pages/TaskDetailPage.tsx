@@ -4,6 +4,7 @@ import { http } from '../api/client';
 import { tasksApi } from '../api/tasks';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { useLiveUpdates } from '../realtime/RealtimeContext';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
 
@@ -30,6 +31,17 @@ export function TaskDetailPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useLiveUpdates(
+    () => reload(),
+    {
+      types: ['task.updated', 'task.status_changed', 'comment.created'],
+      filter: (ev) => {
+        const data = ev.data as { taskId?: string };
+        return data.taskId === id;
+      },
+    },
+  );
 
   async function changeStatus(status: TaskStatus) {
     if (!id) return;

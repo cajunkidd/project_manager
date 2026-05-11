@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { authMiddleware } from '../../middleware/auth';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { UnauthorizedError } from '../../utils/errors';
 import { tasksService } from './tasks.service';
 
 const TASK_STATUSES = [
@@ -52,6 +53,11 @@ const reorderSchema = z.object({
     .min(1),
 });
 
+function ctxFromReq(req: { user?: { id: string; role: string } }) {
+  if (!req.user) throw new UnauthorizedError();
+  return { userId: req.user.id, globalRole: req.user.role };
+}
+
 export const tasksRouter = Router();
 
 tasksRouter.use(authMiddleware);
@@ -60,7 +66,7 @@ tasksRouter.patch(
   '/reorder',
   asyncHandler(async (req, res) => {
     const { items } = reorderSchema.parse(req.body);
-    res.json(await tasksService.reorder(items, req.user?.id));
+    res.json(await tasksService.reorder(items, req.user?.id, ctxFromReq(req)));
   }),
 );
 
@@ -72,14 +78,17 @@ tasksRouter.get(
       string
     >;
     res.json(
-      await tasksService.list({
-        status,
-        assignedToId,
-        priority,
-        projectId,
-        search,
-        dueBefore: dueBefore ? new Date(dueBefore) : undefined,
-      }),
+      await tasksService.list(
+        {
+          status,
+          assignedToId,
+          priority,
+          projectId,
+          search,
+          dueBefore: dueBefore ? new Date(dueBefore) : undefined,
+        },
+        ctxFromReq(req),
+      ),
     );
   }),
 );
@@ -87,14 +96,14 @@ tasksRouter.get(
 tasksRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    res.json(await tasksService.getById(req.params.id));
+    res.json(await tasksService.getById(req.params.id, ctxFromReq(req)));
   }),
 );
 
 tasksRouter.get(
   '/:id/activity',
   asyncHandler(async (req, res) => {
-    res.json(await tasksService.listActivity(req.params.id));
+    res.json(await tasksService.listActivity(req.params.id, ctxFromReq(req)));
   }),
 );
 
@@ -102,7 +111,7 @@ tasksRouter.post(
   '/',
   asyncHandler(async (req, res) => {
     const data = createSchema.parse(req.body);
-    res.status(201).json(await tasksService.create(data, req.user?.id));
+    res.status(201).json(await tasksService.create(data, req.user?.id, ctxFromReq(req)));
   }),
 );
 
@@ -110,7 +119,7 @@ tasksRouter.patch(
   '/:id',
   asyncHandler(async (req, res) => {
     const data = updateSchema.parse(req.body);
-    res.json(await tasksService.update(req.params.id, data, req.user?.id));
+    res.json(await tasksService.update(req.params.id, data, req.user?.id, ctxFromReq(req)));
   }),
 );
 
@@ -118,14 +127,14 @@ tasksRouter.patch(
   '/:id/status',
   asyncHandler(async (req, res) => {
     const { status } = statusSchema.parse(req.body);
-    res.json(await tasksService.updateStatus(req.params.id, status, req.user?.id));
+    res.json(await tasksService.updateStatus(req.params.id, status, req.user?.id, ctxFromReq(req)));
   }),
 );
 
 tasksRouter.delete(
   '/:id',
   asyncHandler(async (req, res) => {
-    await tasksService.remove(req.params.id, req.user?.id);
+    await tasksService.remove(req.params.id, req.user?.id, ctxFromReq(req));
     res.status(204).send();
   }),
 );

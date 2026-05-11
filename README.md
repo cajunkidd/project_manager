@@ -77,9 +77,19 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   (HMAC-SHA256) JSON payloads with delivery records (status, attempts,
   response body) for debugging. Admin Settings page provides token + webhook
   management with one-time secret reveal.
+- **Phase 6 — Live collaboration:** done. `ProjectMember` model with
+  `owner`/`editor`/`viewer` roles; project creators are auto-added as owners,
+  and `/api/projects/:id/members` endpoints handle invites, role changes, and
+  leaves. Projects, project tasks, and project activity are filtered by
+  membership; admins bypass. A Server-Sent Events endpoint at
+  `/api/realtime/stream` bridges the internal event bus to connected clients,
+  pushing `project.*`, `task.*`, and `comment.created` events to project
+  members and assignees. The frontend `RealtimeProvider` + `useLiveUpdates`
+  hook auto-refreshes the dashboard, project list/detail, board, my-tasks,
+  and task-detail pages when another user makes a change.
 
-The whole platform is implemented and tested — 156 tests across both
-workspaces (122 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 168 tests across both
+workspaces (134 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

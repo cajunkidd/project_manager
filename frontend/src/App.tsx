@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { AppShell } from './layout/AppShell';
 import { NotificationsProvider } from './notifications/NotificationsContext';
+import { RealtimeProvider } from './realtime/RealtimeContext';
 import { AITasksPage } from './pages/AITasksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
@@ -43,9 +44,11 @@ export function App() {
       <Route
         element={
           <RequireAuth>
-            <NotificationsProvider>
-              <AppShell />
-            </NotificationsProvider>
+            <RealtimeProvider>
+              <NotificationsProvider>
+                <AppShell />
+              </NotificationsProvider>
+            </RealtimeProvider>
           </RequireAuth>
         }
       >

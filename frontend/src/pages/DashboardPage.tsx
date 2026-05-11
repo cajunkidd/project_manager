@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardApi, type UserDashboard } from '../api/dashboard';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
+import { useLiveUpdates } from '../realtime/RealtimeContext';
 import type { Task } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
 
@@ -10,9 +11,17 @@ export function DashboardPage() {
   const [data, setData] = useState<UserDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     dashboardApi.me().then(setData).catch((err) => setError(err.message));
   }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  useLiveUpdates(reload, {
+    types: ['task.created', 'task.updated', 'task.status_changed', 'task.assigned'],
+  });
 
   if (error) return <div className="error">{error}</div>;
   if (!data) return <div className="muted">Loading…</div>;
