@@ -1,5 +1,7 @@
 import cors from 'cors';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
 import { aiRouter, projectAiRouter } from './modules/ai/ai.routes';
 import { apiTokensRouter } from './modules/api-tokens/api-tokens.routes';
@@ -64,6 +66,20 @@ export function createApp() {
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);
 
+  // Serve the built frontend (if present) so a single process can ship the UI.
+  const frontendDist = resolveFrontendDist();
+  if (frontendDist) {
+    app.use(express.static(frontendDist));
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
+      res.sendFile(path.join(frontendDist, 'index.html'));
+    });
+  } else {
+    app.use((req, res, next) => {
+      if (req.path.startsWith('/api/')) return next();
+      res.status(404).json({ error: 'Not found' });
+    });
+  }
+
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
@@ -71,4 +87,18 @@ export function createApp() {
   app.use(errorHandler);
 
   return app;
+}
+
+function resolveFrontendDist(): string | null {
+  const override = process.env.FRONTEND_DIST;
+  const candidates = [
+    override,
+    path.resolve(__dirname, '../../frontend/dist'),
+    path.resolve(__dirname, '../../../frontend/dist'),
+    path.resolve(process.cwd(), 'frontend/dist'),
+  ].filter((p): p is string => Boolean(p));
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, 'index.html'))) return dir;
+  }
+  return null;
 }
