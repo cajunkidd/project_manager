@@ -42,6 +42,7 @@ model User {
   timeEntries       TimeEntry[]
   approvalsRequested Approval[]        @relation("ApprovalRequester")
   approvalsToReview  Approval[]        @relation("ApprovalApprover")
+  portfolios         Portfolio[]       @relation("PortfolioOwner")
 }
 
 model Project {
@@ -66,6 +67,7 @@ model Project {
   forms          Form[]    @relation("FormDefaultProject")
   attachments    Attachment[]
   recurringTasks RecurringTask[]
+  portfolios     PortfolioProject[]
 
   @@index([status])
   @@index([ownerId])
@@ -409,6 +411,34 @@ model Approval {
   @@index([taskId])
   @@index([approverId, status])
   @@index([requestedById])
+}
+
+model Portfolio {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String?
+  ownerId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User?              @relation("PortfolioOwner", fields: [ownerId], references: [id])
+  projects PortfolioProject[]
+}
+
+model PortfolioProject {
+  id          String   @id @default(uuid())
+  portfolioId String
+  projectId   String
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  portfolio Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, projectId])
+  @@index([portfolioId])
+  @@index([projectId])
 }
 
 model EmailLog {

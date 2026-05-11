@@ -144,9 +144,17 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   counterparty. `GET /api/approvals?mine=true&status=pending` powers a
   new `/approvals` queue page, and an `ApprovalsCard` on the task detail
   screen handles request + decide + cancel inline.
+- **Phase 14 — Portfolio management:** done. `Portfolio` groups multiple
+  projects via a `PortfolioProject` join table (cascade on portfolio or
+  project delete; unique per portfolio+project). `GET /api/portfolios/:id/summary`
+  rolls up project count, project-status mix, total/completed/overdue
+  tasks, completion percentage, and total minutes logged across the
+  portfolio's projects. Admin UI: `/portfolios` lists and creates;
+  `/portfolios/:id` shows the metric cards, status mix, project table,
+  and an inline add/remove control.
 
-The whole platform is implemented and tested — 204 tests across both
-workspaces (170 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 209 tests across both
+workspaces (175 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

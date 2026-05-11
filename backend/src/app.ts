@@ -27,6 +27,7 @@ import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
+import { portfoliosRouter } from './modules/portfolios/portfolios.routes';
 import { projectsRouter } from './modules/projects/projects.routes';
 import { projectTemplatesRouter } from './modules/project-templates/project-templates.routes';
 import { recurringTasksRouter } from './modules/recurring-tasks/recurring-tasks.routes';
@@ -118,6 +119,7 @@ export function createApp() {
   app.use('/api/webhooks', webhooksRouter);
   app.use('/api/recurring-tasks', recurringTasksRouter);
   app.use('/api/project-templates', projectTemplatesRouter);
+  app.use('/api/portfolios', portfoliosRouter);
 
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);

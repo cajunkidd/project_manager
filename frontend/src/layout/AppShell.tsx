@@ -7,6 +7,7 @@ const NAV = [
   { to: '/my-tasks', label: 'My Tasks' },
   { to: '/approvals', label: 'Approvals' },
   { to: '/projects', label: 'Projects' },
+  { to: '/portfolios', label: 'Portfolios' },
   { to: '/board', label: 'Board' },
   { to: '/timeline', label: 'Timeline' },
   { to: '/time', label: 'Time' },

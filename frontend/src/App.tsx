@@ -15,6 +15,8 @@ import { LoginPage } from './pages/LoginPage';
 import { MyTasksPage } from './pages/MyTasksPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
+import { PortfolioDetailPage } from './pages/PortfolioDetailPage';
+import { PortfoliosPage } from './pages/PortfoliosPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectTemplatesPage } from './pages/ProjectTemplatesPage';
 import { RecurringTasksPage } from './pages/RecurringTasksPage';
@@ -58,6 +60,8 @@ export function App() {
         <Route path="my-tasks" element={<MyTasksPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/:id" element={<ProjectDetailPage />} />
+        <Route path="portfolios" element={<PortfoliosPage />} />
+        <Route path="portfolios/:id" element={<PortfolioDetailPage />} />
         <Route path="tasks/:id" element={<TaskDetailPage />} />
         <Route path="board" element={<BoardPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
