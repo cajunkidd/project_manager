@@ -22,6 +22,28 @@ aiRouter.post(
   }),
 );
 
+aiRouter.get(
+  '/duplicates',
+  asyncHandler(async (req, res) => {
+    const { projectId, threshold } = req.query as Record<string, string>;
+    res.json({
+      groups: await aiService.findDuplicateTasks({
+        projectId,
+        threshold: threshold ? Number(threshold) : undefined,
+      }),
+    });
+  }),
+);
+
+projectAiRouter.get(
+  '/duplicates',
+  asyncHandler(async (req, res) => {
+    res.json({
+      groups: await aiService.findDuplicateTasks({ projectId: req.params.id }),
+    });
+  }),
+);
+
 projectAiRouter.get(
   '/summary',
   asyncHandler(async (req, res) => {

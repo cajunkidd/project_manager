@@ -319,3 +319,71 @@ export function scoreProjectRisk(ctx: ProjectAIContext, now = new Date()): RiskS
 
   return { score, level, explanation, factors };
 }
+
+export interface DuplicateCandidate {
+  id: string;
+  title: string;
+  status: string;
+  projectId: string | null;
+}
+
+export interface DuplicateGroup {
+  similarity: number;
+  tasks: DuplicateCandidate[];
+}
+
+const STOP_WORDS = new Set([
+  'a', 'an', 'and', 'the', 'to', 'of', 'for', 'in', 'on', 'at', 'with', 'by',
+  'is', 'are', 'be', 'will', 'this', 'that', 'it', 'as', 'or', 'from',
+]);
+
+function tokenize(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((token) => token.length > 1 && !STOP_WORDS.has(token)),
+  );
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 && b.size === 0) return 0;
+  let intersection = 0;
+  for (const token of a) {
+    if (b.has(token)) intersection += 1;
+  }
+  const union = a.size + b.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+export function findDuplicateTasks(
+  tasks: DuplicateCandidate[],
+  threshold = 0.6,
+): DuplicateGroup[] {
+  const tokenized = tasks.map((task) => ({ task, tokens: tokenize(task.title) }));
+  const seen = new Set<string>();
+  const groups: DuplicateGroup[] = [];
+
+  for (let i = 0; i < tokenized.length; i += 1) {
+    if (seen.has(tokenized[i].task.id)) continue;
+    const cluster: DuplicateCandidate[] = [tokenized[i].task];
+    let bestSimilarity = 0;
+    for (let j = i + 1; j < tokenized.length; j += 1) {
+      if (seen.has(tokenized[j].task.id)) continue;
+      const similarity = jaccard(tokenized[i].tokens, tokenized[j].tokens);
+      if (similarity >= threshold) {
+        cluster.push(tokenized[j].task);
+        seen.add(tokenized[j].task.id);
+        if (similarity > bestSimilarity) bestSimilarity = similarity;
+      }
+    }
+    if (cluster.length > 1) {
+      seen.add(tokenized[i].task.id);
+      groups.push({ similarity: Number(bestSimilarity.toFixed(2)), tasks: cluster });
+    }
+  }
+
+  groups.sort((a, b) => b.similarity - a.similarity);
+  return groups;
+}

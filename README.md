@@ -127,9 +127,16 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   and a JSON error. Limits are disabled when `NODE_ENV=test` so the
   suite isn't throttled, with the middleware itself covered by direct
   unit tests.
+- **Phase 12 — AI duplicate task detection:** done. Token-Jaccard
+  similarity over normalized, stop-word-filtered task titles groups
+  likely duplicates above a configurable threshold (default 0.6).
+  `GET /api/ai/duplicates?projectId=&threshold=` scans across projects,
+  `GET /api/projects/:id/ai/duplicates` scans within one. Completed and
+  cancelled tasks are excluded. The AI Tasks page surfaces clusters
+  inline with similarity percentages and direct links to each task.
 
-The whole platform is implemented and tested — 193 tests across both
-workspaces (159 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 197 tests across both
+workspaces (163 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

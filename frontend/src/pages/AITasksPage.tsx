@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { aiApi, type ExtractedTask } from '../api/ai';
+import { Link } from 'react-router-dom';
+import { aiApi, type DuplicateGroup, type ExtractedTask } from '../api/ai';
 import { http } from '../api/client';
 import { projectsApi } from '../api/projects';
 import { tasksApi } from '../api/tasks';
@@ -23,11 +24,28 @@ export function AITasksPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [createdCount, setCreatedCount] = useState(0);
+  const [dupGroups, setDupGroups] = useState<DuplicateGroup[] | null>(null);
+  const [dupBusy, setDupBusy] = useState(false);
+  const [dupProjectId, setDupProjectId] = useState('');
 
   useEffect(() => {
     projectsApi.list().then(setProjects).catch(() => undefined);
     http.get<User[]>('/users').then(setUsers).catch(() => undefined);
   }, []);
+
+  async function scanDuplicates() {
+    setDupBusy(true);
+    try {
+      const res = await aiApi.findDuplicates(
+        dupProjectId ? { projectId: dupProjectId } : {},
+      );
+      setDupGroups(res.groups);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to scan duplicates');
+    } finally {
+      setDupBusy(false);
+    }
+  }
 
   async function extract() {
     setError(null);
@@ -129,6 +147,64 @@ export function AITasksPage() {
             Created {createdCount} task{createdCount === 1 ? '' : 's'}.
           </div>
         ) : null}
+      </div>
+
+      <div className="card col">
+        <div className="page-header" style={{ marginBottom: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 16 }}>Duplicate task detection</h2>
+          <div className="row" style={{ gap: 8 }}>
+            <select
+              value={dupProjectId}
+              onChange={(e) => setDupProjectId(e.target.value)}
+              style={{ maxWidth: 240 }}
+            >
+              <option value="">All projects</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <button className="btn" type="button" onClick={scanDuplicates} disabled={dupBusy}>
+              {dupBusy ? 'Scanning…' : 'Scan for duplicates'}
+            </button>
+          </div>
+        </div>
+        <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+          Compares open task titles using token Jaccard similarity. Closed and
+          cancelled tasks are skipped.
+        </p>
+        {dupGroups === null ? null : dupGroups.length === 0 ? (
+          <div className="muted">No duplicate clusters found.</div>
+        ) : (
+          <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
+            {dupGroups.map((group, idx) => (
+              <li
+                key={idx}
+                style={{
+                  border: '1px solid var(--border, #eee)',
+                  borderRadius: 6,
+                  padding: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <div className="muted" style={{ fontSize: 12 }}>
+                  Similarity ≈ {(group.similarity * 100).toFixed(0)}%
+                </div>
+                <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                  {group.tasks.map((t) => (
+                    <li key={t.id}>
+                      <Link to={`/tasks/${t.id}`}>{t.title}</Link>
+                      <span className="muted" style={{ fontSize: 11, marginLeft: 6 }}>
+                        ({t.status})
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {drafts.length > 0 ? (

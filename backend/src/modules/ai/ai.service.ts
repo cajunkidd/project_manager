@@ -2,6 +2,7 @@ import { prisma } from '../../db/prisma';
 import { NotFoundError } from '../../utils/errors';
 import {
   extractTasksFromText,
+  findDuplicateTasks,
   scoreProjectRisk,
   summarizeProject,
 } from './ai.heuristic';
@@ -66,5 +67,18 @@ export const aiService = {
 
   extractTasks(text: string) {
     return extractTasksFromText(text);
+  },
+
+  async findDuplicateTasks(opts: { projectId?: string; threshold?: number } = {}) {
+    const tasks = await prisma.task.findMany({
+      where: {
+        ...(opts.projectId ? { projectId: opts.projectId } : {}),
+        status: { notIn: ['done', 'cancelled'] },
+      },
+      select: { id: true, title: true, status: true, projectId: true },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+    });
+    return findDuplicateTasks(tasks, opts.threshold);
   },
 };
