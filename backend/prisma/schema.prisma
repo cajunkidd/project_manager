@@ -39,6 +39,7 @@ model User {
   recurringTasks    RecurringTask[]    @relation("RecurringTaskCreator")
   recurringAssignee RecurringTask[]    @relation("RecurringTaskAssignee")
   projectTemplates  ProjectTemplate[]  @relation("ProjectTemplateCreator")
+  timeEntries       TimeEntry[]
 }
 
 model Project {
@@ -96,6 +97,7 @@ model Task {
   attachments     Attachment[]
   dependencies    TaskDependency[] @relation("TaskDependent")
   dependents      TaskDependency[] @relation("TaskDependsOn")
+  timeEntries     TimeEntry[]
 
   @@index([projectId])
   @@index([assignedToId])
@@ -363,6 +365,25 @@ model RecurringTask {
 
   @@index([isActive, nextRunAt])
   @@index([projectId])
+}
+
+model TimeEntry {
+  id          String   @id @default(uuid())
+  taskId      String
+  userId      String
+  minutes     Int
+  description String?
+  billable    Boolean  @default(true)
+  loggedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([userId, loggedAt])
+  @@index([loggedAt])
 }
 
 model EmailLog {

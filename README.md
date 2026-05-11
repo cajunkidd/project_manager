@@ -103,9 +103,18 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   standard `project.created` / `task.created` events. Admin UI at
   `/project-templates` lists, creates, updates, deletes templates, and
   instantiates them straight into the Project Detail page.
+- **Phase 9 — Time tracking:** done. Per-task `TimeEntry` records with
+  minutes (1–1440 cap), an optional description, a `billable` flag, and
+  a `loggedAt` timestamp. Authors can edit or delete their own entries;
+  admins and managers can edit anyone's. Aggregation endpoint
+  `GET /api/time-entries/summary?groupBy=user|project|task|day` rolls up
+  total/billable minutes with filters for user, project, and date range.
+  Task detail screen shows a per-task log + quick "log time" form, and a
+  new `/time` page provides a weekly summary with project/user/day
+  grouping and a manager toggle for team-wide view.
 
-The whole platform is implemented and tested — 180 tests across both
-workspaces (146 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 186 tests across both
+workspaces (152 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

@@ -21,6 +21,7 @@ import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { TimelinePage } from './pages/TimelinePage';
+import { TimePage } from './pages/TimePage';
 import { WorkloadPage } from './pages/WorkloadPage';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -85,6 +86,7 @@ export function App() {
           }
         />
         <Route path="timeline" element={<TimelinePage />} />
+        <Route path="time" element={<TimePage />} />
         <Route path="ai/tasks" element={<AITasksPage />} />
         <Route
           path="reports"

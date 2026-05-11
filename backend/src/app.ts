@@ -29,6 +29,10 @@ import { projectTemplatesRouter } from './modules/project-templates/project-temp
 import { recurringTasksRouter } from './modules/recurring-tasks/recurring-tasks.routes';
 import { reportsRouter } from './modules/reports/reports.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
+import {
+  taskTimeEntriesRouter,
+  timeEntriesRouter,
+} from './modules/time-entries/time-entries.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
 import { registerWebhookDispatcher } from './modules/webhooks/webhooks.dispatcher';
@@ -58,6 +62,8 @@ export function createApp() {
   app.use('/api/tasks/:id/comments', taskCommentsRouter);
   app.use('/api/tasks/:id/attachments', taskAttachmentsRouter);
   app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
+  app.use('/api/tasks/:id/time-entries', taskTimeEntriesRouter);
+  app.use('/api/time-entries', timeEntriesRouter);
   app.use('/api/projects/:id/attachments', projectAttachmentsRouter);
   app.use('/api/attachments', attachmentsRouter);
   app.use('/api/comments', commentsRouter);

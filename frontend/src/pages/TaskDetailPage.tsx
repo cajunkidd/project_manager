@@ -5,6 +5,7 @@ import { tasksApi } from '../api/tasks';
 import { AttachmentsCard } from '../components/AttachmentsCard';
 import { DependenciesCard } from '../components/DependenciesCard';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { TimeEntriesCard } from '../components/TimeEntriesCard';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Comment, Task, TaskStatus } from '../types';
 import { formatDate } from '../utils/format';
@@ -121,6 +122,8 @@ export function TaskDetailPage() {
       ) : null}
 
       <DependenciesCard taskId={task.id} projectId={task.projectId} />
+
+      <TimeEntriesCard taskId={task.id} />
 
       <AttachmentsCard taskId={task.id} />
 
