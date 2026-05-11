@@ -3,6 +3,7 @@ import { useAuth } from './auth/AuthContext';
 import { AppShell } from './layout/AppShell';
 import { NotificationsProvider } from './notifications/NotificationsContext';
 import { AITasksPage } from './pages/AITasksPage';
+import { ApprovalsPage } from './pages/ApprovalsPage';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
@@ -60,6 +61,7 @@ export function App() {
         <Route path="tasks/:id" element={<TaskDetailPage />} />
         <Route path="board" element={<BoardPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="approvals" element={<ApprovalsPage />} />
         <Route path="forms" element={<FormsPage />} />
         <Route path="forms/:id/submit" element={<FormSubmitPage />} />
         <Route

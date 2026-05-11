@@ -5,6 +5,7 @@ import { createRateLimiter, ipKey, tokenKey, userKey } from './middleware/rateLi
 import { aiRouter, projectAiRouter } from './modules/ai/ai.routes';
 import { apiTokensRouter } from './modules/api-tokens/api-tokens.routes';
 import { publicApiRouter } from './modules/api-tokens/public.routes';
+import { approvalsRouter, taskApprovalsRouter } from './modules/approvals/approvals.routes';
 import {
   attachmentsRouter,
   projectAttachmentsRouter,
@@ -99,6 +100,8 @@ export function createApp() {
   app.use('/api/tasks/:id/dependencies', taskDependenciesRouter);
   app.use('/api/tasks/:id/time-entries', taskTimeEntriesRouter);
   app.use('/api/time-entries', timeEntriesRouter);
+  app.use('/api/tasks/:id/approvals', taskApprovalsRouter);
+  app.use('/api/approvals', approvalsRouter);
   app.use('/api/projects/:id/attachments', projectAttachmentsRouter);
   app.use('/api/attachments', attachmentsRouter);
   app.use('/api/comments', commentsRouter);

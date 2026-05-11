@@ -134,9 +134,19 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   `GET /api/projects/:id/ai/duplicates` scans within one. Completed and
   cancelled tasks are excluded. The AI Tasks page surfaces clusters
   inline with similarity percentages and direct links to each task.
+- **Phase 13 — Approval workflows:** done. `Approval` records link a
+  task to a requester and a designated approver with a status of
+  `pending | approved | rejected` plus optional request and decision
+  comments. Only the named approver (or an admin) can decide; only the
+  requester (or admin/manager) can cancel a pending request; duplicate
+  pending requests from the same approver are rejected. Each transition
+  emits an activity-log entry and an in-app notification to the
+  counterparty. `GET /api/approvals?mine=true&status=pending` powers a
+  new `/approvals` queue page, and an `ApprovalsCard` on the task detail
+  screen handles request + decide + cancel inline.
 
-The whole platform is implemented and tested — 197 tests across both
-workspaces (163 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 204 tests across both
+workspaces (170 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

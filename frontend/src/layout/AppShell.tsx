@@ -5,6 +5,7 @@ import { NotificationsBell } from '../components/NotificationsBell';
 const NAV = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/my-tasks', label: 'My Tasks' },
+  { to: '/approvals', label: 'Approvals' },
   { to: '/projects', label: 'Projects' },
   { to: '/board', label: 'Board' },
   { to: '/timeline', label: 'Timeline' },

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { http } from '../api/client';
 import { tasksApi } from '../api/tasks';
+import { ApprovalsCard } from '../components/ApprovalsCard';
 import { AttachmentsCard } from '../components/AttachmentsCard';
 import { DependenciesCard } from '../components/DependenciesCard';
 import { PriorityBadge } from '../components/PriorityBadge';
@@ -122,6 +123,8 @@ export function TaskDetailPage() {
       ) : null}
 
       <DependenciesCard taskId={task.id} projectId={task.projectId} />
+
+      <ApprovalsCard taskId={task.id} />
 
       <TimeEntriesCard taskId={task.id} />
 

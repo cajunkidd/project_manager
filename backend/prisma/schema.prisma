@@ -40,6 +40,8 @@ model User {
   recurringAssignee RecurringTask[]    @relation("RecurringTaskAssignee")
   projectTemplates  ProjectTemplate[]  @relation("ProjectTemplateCreator")
   timeEntries       TimeEntry[]
+  approvalsRequested Approval[]        @relation("ApprovalRequester")
+  approvalsToReview  Approval[]        @relation("ApprovalApprover")
 }
 
 model Project {
@@ -98,6 +100,7 @@ model Task {
   dependencies    TaskDependency[] @relation("TaskDependent")
   dependents      TaskDependency[] @relation("TaskDependsOn")
   timeEntries     TimeEntry[]
+  approvals       Approval[]
 
   @@index([projectId])
   @@index([assignedToId])
@@ -384,6 +387,28 @@ model TimeEntry {
   @@index([taskId])
   @@index([userId, loggedAt])
   @@index([loggedAt])
+}
+
+model Approval {
+  id              String    @id @default(uuid())
+  taskId          String
+  requestedById   String
+  approverId      String
+  status          String    @default("pending") // pending | approved | rejected
+  requestComment  String?
+  decisionComment String?
+  requestedAt     DateTime  @default(now())
+  decidedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  requestedBy User @relation("ApprovalRequester", fields: [requestedById], references: [id])
+  approver    User @relation("ApprovalApprover", fields: [approverId], references: [id])
+
+  @@index([taskId])
+  @@index([approverId, status])
+  @@index([requestedById])
 }
 
 model EmailLog {
