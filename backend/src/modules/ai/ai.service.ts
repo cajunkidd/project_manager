@@ -1,10 +1,19 @@
 import { prisma } from '../../db/prisma';
 import { NotFoundError } from '../../utils/errors';
+import { buildExecSummary, type ExecSummaryOptions } from './ai.exec';
 import {
   extractTasksFromText,
   scoreProjectRisk,
   summarizeProject,
 } from './ai.heuristic';
+import {
+  findDuplicateTasks,
+  loadTasksForSuggestions,
+  suggestCleanup,
+  suggestPriorities,
+} from './ai.suggestions';
+import { parseMeetingNotes } from './ai.meetings';
+import { summarizeEmailThread, type EmailMessage } from './ai.email';
 import type { ProjectAIContext } from './ai.types';
 
 async function loadContext(projectId: string): Promise<ProjectAIContext> {
@@ -66,5 +75,32 @@ export const aiService = {
 
   extractTasks(text: string) {
     return extractTasksFromText(text);
+  },
+
+  async execSummary(opts: ExecSummaryOptions = {}) {
+    return buildExecSummary(opts);
+  },
+
+  async prioritize(projectId?: string) {
+    const tasks = await loadTasksForSuggestions(projectId);
+    return { suggestions: suggestPriorities(tasks) };
+  },
+
+  async cleanup(projectId?: string) {
+    const tasks = await loadTasksForSuggestions(projectId);
+    return { suggestions: suggestCleanup(tasks) };
+  },
+
+  async duplicates(projectId?: string, threshold = 0.6) {
+    const tasks = await loadTasksForSuggestions(projectId);
+    return { threshold, groups: findDuplicateTasks(tasks, threshold) };
+  },
+
+  parseMeetingNotes(text: string) {
+    return parseMeetingNotes(text);
+  },
+
+  summarizeEmail(thread: EmailMessage[]) {
+    return summarizeEmailThread(thread);
   },
 };
