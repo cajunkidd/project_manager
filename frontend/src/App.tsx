@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { AppShell } from './layout/AppShell';
 import { NotificationsProvider } from './notifications/NotificationsContext';
+import { AIInsightsPage } from './pages/AIInsightsPage';
 import { AITasksPage } from './pages/AITasksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
@@ -84,6 +85,14 @@ export function App() {
         />
         <Route path="timeline" element={<TimelinePage />} />
         <Route path="ai/tasks" element={<AITasksPage />} />
+        <Route
+          path="ai/insights"
+          element={
+            <RequireAdmin>
+              <AIInsightsPage />
+            </RequireAdmin>
+          }
+        />
         <Route
           path="reports"
           element={

@@ -15,6 +15,7 @@ const NAV = [
 const ADMIN_NAV = [
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
+  { to: '/ai/insights', label: 'AI Insights' },
   { to: '/automations', label: 'Automations' },
   { to: '/settings', label: 'Settings' },
 ];

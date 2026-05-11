@@ -66,6 +66,10 @@ export const usersService = {
     });
   },
 
+  async count() {
+    return prisma.user.count();
+  },
+
   async update(id: string, input: UpdateUserInput) {
     await this.getById(id);
     return prisma.user.update({

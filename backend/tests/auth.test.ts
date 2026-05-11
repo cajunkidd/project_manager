@@ -1,8 +1,11 @@
 import request from 'supertest';
-import { app } from './helpers';
+import { app, createTestUser } from './helpers';
 
 describe('auth', () => {
   it('registers a new user and returns a token', async () => {
+    // Seed an existing user so this registration does not get auto-promoted to admin.
+    await createTestUser({ email: 'seed@example.com' });
+
     const res = await request(app).post('/api/auth/register').send({
       email: 'alice@example.com',
       displayName: 'Alice',
@@ -16,6 +19,16 @@ describe('auth', () => {
       role: 'user',
     });
     expect(res.body.user).not.toHaveProperty('passwordHash');
+  });
+
+  it('promotes the first registered user to admin', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'firstadmin@example.com',
+      displayName: 'First Admin',
+      password: 'password1234',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.user.role).toBe('admin');
   });
 
   it('rejects duplicate email', async () => {

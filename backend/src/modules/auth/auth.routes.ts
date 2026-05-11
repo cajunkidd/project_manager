@@ -23,7 +23,13 @@ authRouter.post(
   '/register',
   asyncHandler(async (req, res) => {
     const data = registerSchema.parse(req.body);
-    const user = await usersService.create({ ...data, role: 'user' });
+    // First user on a fresh install becomes the admin so the app is usable
+    // immediately after the launcher boots.
+    const isFirstUser = (await usersService.count()) === 0;
+    const user = await usersService.create({
+      ...data,
+      role: isFirstUser ? 'admin' : 'user',
+    });
     const token = signToken({ id: user.id, email: user.email, role: user.role });
     res.status(201).json({ user, token });
   }),

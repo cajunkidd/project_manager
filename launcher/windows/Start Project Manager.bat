@@ -34,10 +34,22 @@ REM  Step 2 — environment defaults
 REM ---------------------------------------------------------------------------
 if "%PROJECT_MANAGER_PORT%"=="" set "PROJECT_MANAGER_PORT=4000"
 set "PORT=%PROJECT_MANAGER_PORT%"
-set "NODE_ENV=production"
 set "OPEN_BROWSER=1"
 if "%DATABASE_URL%"=="" set "DATABASE_URL=file:./project-manager.db"
-if "%JWT_SECRET%"=="" set "JWT_SECRET=change-me-in-production"
+REM NODE_ENV is set AFTER the first-run install below so that devDependencies
+REM (TypeScript, Vite, etc.) are installed during the build step.
+
+REM ---------------------------------------------------------------------------
+REM  JWT secret: generate once and persist to .jwt-secret so JWTs survive
+REM  launcher restarts (and so we don't ship a hard-coded secret).
+REM ---------------------------------------------------------------------------
+set "JWT_SECRET_FILE=%REPO_ROOT%\.jwt-secret"
+if "%JWT_SECRET%"=="" (
+    if not exist "%JWT_SECRET_FILE%" (
+        "%POWERSHELL%" -NoProfile -Command "[System.IO.File]::WriteAllText('%JWT_SECRET_FILE%', [Convert]::ToBase64String((1..48 ^| ForEach-Object { Get-Random -Maximum 256 })))"
+    )
+    for /f "usebackq delims=" %%S in ("%JWT_SECRET_FILE%") do set "JWT_SECRET=%%S"
+)
 
 REM ---------------------------------------------------------------------------
 REM  Step 3 — first-run bootstrap
@@ -45,7 +57,8 @@ REM ---------------------------------------------------------------------------
 set "BOOTSTRAP_MARKER=%REPO_ROOT%\.launcher-bootstrapped"
 if not exist "%BOOTSTRAP_MARKER%" (
     echo Setting up Project Manager for first use. This may take a few minutes...
-    call npm install --no-audit --no-fund
+    set "NODE_ENV=development"
+    call npm install --no-audit --no-fund --include=dev
     if errorlevel 1 goto bootstrap_failed
 
     pushd backend >nul
@@ -62,6 +75,8 @@ if not exist "%BOOTSTRAP_MARKER%" (
     echo First-run setup complete.
     echo.
 )
+
+set "NODE_ENV=production"
 
 REM ---------------------------------------------------------------------------
 REM  Step 4 — make sure DB schema is current on every launch
