@@ -112,9 +112,16 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   Task detail screen shows a per-task log + quick "log time" form, and a
   new `/time` page provides a weekly summary with project/user/day
   grouping and a manager toggle for team-wide view.
+- **Phase 10 — Audit log query API and CSV export:** done. Admin- and
+  manager-only `GET /api/audit` queries the existing `ActivityLog` with
+  filters for entity type, entity id, user id, action, and date range
+  (capped at 1000 rows). `GET /api/audit/export.csv` streams the same
+  result as CSV (with proper quote-doubling and comma-quoting) for
+  compliance and offline review. Admin UI at `/audit` lists entries with
+  the same filters and offers a one-click CSV download.
 
-The whole platform is implemented and tested — 186 tests across both
-workspaces (152 backend integration + 34 frontend unit).
+The whole platform is implemented and tested — 190 tests across both
+workspaces (156 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.

@@ -3,6 +3,7 @@ import { useAuth } from './auth/AuthContext';
 import { AppShell } from './layout/AppShell';
 import { NotificationsProvider } from './notifications/NotificationsContext';
 import { AITasksPage } from './pages/AITasksPage';
+import { AuditLogPage } from './pages/AuditLogPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -101,6 +102,14 @@ export function App() {
           element={
             <RequireAdmin>
               <WorkloadPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="audit"
+          element={
+            <RequireAdmin>
+              <AuditLogPage />
             </RequireAdmin>
           }
         />

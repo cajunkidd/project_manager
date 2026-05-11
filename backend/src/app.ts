@@ -11,6 +11,7 @@ import {
 } from './modules/attachments/attachments.routes';
 import { automationsRouter } from './modules/automations/automations.routes';
 import { registerAutomationEngine } from './modules/automations/automations.engine';
+import { auditRouter } from './modules/audit/audit.routes';
 import { authRouter } from './modules/auth/auth.routes';
 import {
   commentsRouter,
@@ -55,6 +56,7 @@ export function createApp() {
 
   // Internal (JWT-authenticated) API
   app.use('/api/auth', authRouter);
+  app.use('/api/audit', auditRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/projects', projectsRouter);
   app.use('/api/projects/:id/comments', projectCommentsRouter);
