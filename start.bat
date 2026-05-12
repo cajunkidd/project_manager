@@ -52,14 +52,16 @@ if not exist "backend\.env" (
   copy /Y "backend\.env.example" "backend\.env" >nul
 )
 
-if not exist "backend\dev.db" (
-  echo Initializing local database...
-  pushd backend
-  call npx prisma db push
-  set "RC=%ERRORLEVEL%"
+if exist "backend\dev.db" goto :db_ready
+echo Initializing local database...
+pushd backend
+call npx prisma db push
+if errorlevel 1 (
   popd
-  if not "%RC%"=="0" goto :fail
+  goto :fail
 )
+popd
+:db_ready
 
 echo.
 echo Starting backend (port 4000) and frontend (port 5173)...
