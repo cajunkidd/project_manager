@@ -1,11 +1,36 @@
 @echo off
 setlocal EnableExtensions
 title Project Manager
-cd /d "%~dp0"
 
 echo.
 echo === Project Manager launcher ===
 echo.
+
+REM Detect UNC / network-share location. CMD cannot use UNC paths as the
+REM current directory, so we use pushd which maps a temporary drive letter.
+set "SCRIPT_DIR=%~dp0"
+if "%SCRIPT_DIR:~0,2%"=="\\" (
+  echo [WARNING] This folder is on a network share:
+  echo   %SCRIPT_DIR%
+  echo Running a Node.js app from a network/redirected Desktop is very slow
+  echo and often blocked by AV or folder-redirection policies.
+  echo.
+  echo Strongly recommended: move the whole folder to a LOCAL disk, e.g.
+  echo   C:\Users\%USERNAME%\project_manager
+  echo and run start.bat from there.
+  echo.
+  echo Attempting to continue anyway via a temporary drive mapping...
+  echo.
+)
+
+pushd "%SCRIPT_DIR%" || (
+  echo [ERROR] Could not switch to the script directory:
+  echo   %SCRIPT_DIR%
+  echo Move the folder to a local disk ^(e.g. C:\Users\%USERNAME%\project_manager^)
+  echo and try again.
+  pause
+  exit /b 1
+)
 
 where node >nul 2>&1
 if errorlevel 1 (
@@ -45,11 +70,13 @@ echo.
 start "" /min cmd /c "timeout /t 8 /nobreak >nul & start http://localhost:5173"
 
 call npm start
+popd
 goto :eof
 
 :fail
 echo.
 echo [ERROR] Setup failed. Scroll up to see the cause.
 echo.
+popd
 pause
 exit /b 1
