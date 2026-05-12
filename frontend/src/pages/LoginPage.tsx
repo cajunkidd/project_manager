@@ -27,6 +27,7 @@ export function LoginPage() {
 
   return (
     <div className="card auth-card">
+      <img src="/stine-logo.svg" alt="Stine" className="auth-logo" />
       <h1>Sign in</h1>
       <form onSubmit={onSubmit} className="col">
         <div>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 140" role="img" aria-label="Stine">
+  <defs>
+    <linearGradient id="stineGreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3aaf4d"/>
+      <stop offset="55%" stop-color="#1f8a36"/>
+      <stop offset="100%" stop-color="#0f6a26"/>
+    </linearGradient>
+    <linearGradient id="stineOrange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ef6a2c"/>
+      <stop offset="100%" stop-color="#c84412"/>
+    </linearGradient>
+  </defs>
+  <text
+    x="160"
+    y="92"
+    text-anchor="middle"
+    font-family="'Arial Black', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-weight="900"
+    font-size="96"
+    font-style="italic"
+    fill="url(#stineGreen)"
+    stroke="#0a4e1c"
+    stroke-width="1.5"
+    paint-order="stroke"
+  >Stine</text>
+  <rect x="50" y="106" width="220" height="14" rx="2" fill="url(#stineOrange)"/>
+</svg>

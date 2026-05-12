@@ -26,7 +26,10 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h1>Project Manager</h1>
+        <div className="brand">
+          <img src="/stine-logo.svg" alt="Stine" className="brand-logo" />
+          <div className="brand-sub">Project Manager</div>
+        </div>
         {NAV.map((item) => (
           <NavLink
             key={item.to}
@@ -52,7 +55,7 @@ export function AppShell() {
       </aside>
       <div className="main">
         <header className="topbar">
-          <div className="muted">Internal Project Management</div>
+          <div className="muted">Stine — Internal Project Management</div>
           <div className="user-pill">
             <NotificationsBell />
             {user ? (
