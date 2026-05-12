@@ -5,15 +5,20 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { UnauthorizedError } from '../../utils/errors';
 import { usersService } from '../users/users.service';
 
+const emailSchema = z
+  .string()
+  .email()
+  .transform((s) => s.trim().toLowerCase());
+
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   displayName: z.string().min(1),
   password: z.string().min(8),
   department: z.string().nullable().optional(),
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(1),
 });
 

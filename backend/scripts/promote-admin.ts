@@ -24,19 +24,22 @@ async function main() {
 
   const prisma = new PrismaClient();
   try {
-    const existing = await prisma.user.findUnique({ where: { email } });
+    // Case-insensitive lookup so it works regardless of how the user typed
+    // their email at registration.
+    const all = await prisma.user.findMany({ select: { id: true, email: true, role: true, displayName: true } });
+    const existing = all.find((u) => u.email.toLowerCase() === email);
     if (!existing) {
       console.error(`No user found with email "${email}". Have they registered yet?`);
       process.exit(2);
     }
 
     if (existing.role === 'admin') {
-      console.log(`${email} is already admin — nothing to do.`);
+      console.log(`${existing.email} is already admin — nothing to do.`);
       return;
     }
 
     const updated = await prisma.user.update({
-      where: { email },
+      where: { id: existing.id },
       data: { role: 'admin' },
     });
     console.log(`Promoted ${updated.email} (${updated.displayName}): ${existing.role} → ${updated.role}`);
