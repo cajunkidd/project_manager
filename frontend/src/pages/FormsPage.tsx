@@ -7,7 +7,8 @@ import { formatDate } from '../utils/format';
 
 export function FormsPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const isAdmin =
+    user?.role === 'master' || user?.role === 'admin' || user?.role === 'manager';
   const [forms, setForms] = useState<IntakeForm[]>([]);
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [error, setError] = useState<string | null>(null);

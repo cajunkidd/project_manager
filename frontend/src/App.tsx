@@ -31,7 +31,9 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'admin' && user.role !== 'manager') return <Navigate to="/" replace />;
+  if (user.role !== 'master' && user.role !== 'admin' && user.role !== 'manager') {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 }
 

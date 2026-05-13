@@ -109,7 +109,7 @@ export const commentsService = {
   async remove(id: string, userId: string, role: string) {
     const existing = await prisma.comment.findUnique({ where: { id } });
     if (!existing) throw new NotFoundError('Comment not found');
-    if (existing.userId !== userId && role !== 'admin') {
+    if (existing.userId !== userId && role !== 'admin' && role !== 'master') {
       throw new ForbiddenError('Cannot delete another user\'s comment');
     }
     await prisma.comment.delete({ where: { id } });
