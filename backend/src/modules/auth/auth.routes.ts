@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authMiddleware, signToken } from '../../middleware/auth';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { UnauthorizedError } from '../../utils/errors';
+import { promoteIfMasterEmail } from '../users/bootstrap-master';
 import { usersService } from '../users/users.service';
 
 const registerSchema = z.object({
@@ -38,9 +39,14 @@ authRouter.post(
     const ok = await usersService.verifyPassword(password, user.passwordHash);
     if (!ok) throw new UnauthorizedError('Invalid credentials');
 
-    const token = signToken({ id: user.id, email: user.email, role: user.role });
+    // Self-heal: if this is the configured master email but the account
+    // pre-dates the master rollout, promote on login so the freshly issued
+    // token reflects the elevated role.
+    const role = await promoteIfMasterEmail(user.id, user.email, user.role);
+
+    const token = signToken({ id: user.id, email: user.email, role });
     const { passwordHash: _omit, ...safe } = user;
-    res.json({ user: safe, token });
+    res.json({ user: { ...safe, role }, token });
   }),
 );
 
@@ -48,6 +54,8 @@ authRouter.get(
   '/me',
   authMiddleware,
   asyncHandler(async (req, res) => {
-    res.json(await usersService.getById(req.user!.id));
+    const fresh = await usersService.getById(req.user!.id);
+    const role = await promoteIfMasterEmail(fresh.id, fresh.email, fresh.role);
+    res.json({ ...fresh, role });
   }),
 );

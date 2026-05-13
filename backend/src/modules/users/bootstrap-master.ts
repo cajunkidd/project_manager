@@ -23,3 +23,19 @@ export async function ensureMasterAccount(): Promise<void> {
     data: { role: 'master', isActive: true },
   });
 }
+
+/**
+ * If the given user is the configured master email but doesn't yet have the
+ * master role, promote them and return the new role. Otherwise return the
+ * current role unchanged. Safe to call on every auth touchpoint.
+ */
+export async function promoteIfMasterEmail(
+  id: string,
+  email: string,
+  currentRole: string,
+): Promise<string> {
+  if (email.toLowerCase() !== MASTER_ACCOUNT_EMAIL) return currentRole;
+  if (currentRole === 'master') return currentRole;
+  await prisma.user.update({ where: { id }, data: { role: 'master', isActive: true } });
+  return 'master';
+}

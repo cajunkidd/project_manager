@@ -21,6 +21,7 @@ import { registerNotificationListeners } from './modules/notifications/notificat
 import { projectsRouter } from './modules/projects/projects.routes';
 import { reportsRouter } from './modules/reports/reports.routes';
 import { tasksRouter } from './modules/tasks/tasks.routes';
+import { ensureMasterAccount } from './modules/users/bootstrap-master';
 import { usersRouter } from './modules/users/users.routes';
 import { webhooksRouter } from './modules/webhooks/webhooks.routes';
 import { registerWebhookDispatcher } from './modules/webhooks/webhooks.dispatcher';
@@ -31,6 +32,12 @@ export function createApp() {
   registerAutomationEngine();
   registerEmailListeners();
   registerWebhookDispatcher();
+  // Best-effort: promote the configured master email if the account exists.
+  // Runs in the background; failures are logged but don't block startup.
+  ensureMasterAccount().catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error('ensureMasterAccount failed:', err);
+  });
 
   const app = express();
 

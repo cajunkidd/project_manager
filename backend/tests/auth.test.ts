@@ -76,4 +76,32 @@ describe('auth', () => {
     const res = await request(app).get('/api/auth/me');
     expect(res.status).toBe(401);
   });
+
+  it('self-heals: existing master-email account is promoted on login', async () => {
+    // Simulate a master-email account that pre-dates the master rollout by
+    // poking the DB directly so the create-time auto-promotion is bypassed.
+    const { prisma } = await import('../src/db/prisma');
+    const bcrypt = await import('bcryptjs');
+    await prisma.user.create({
+      data: {
+        email: 'kyle.neely27@gmail.com',
+        displayName: 'Kyle',
+        passwordHash: await bcrypt.hash('password1234', 10),
+        role: 'user',
+      },
+    });
+
+    const res = await request(app).post('/api/auth/login').send({
+      email: 'kyle.neely27@gmail.com',
+      password: 'password1234',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user.role).toBe('master');
+
+    const me = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${res.body.token}`);
+    expect(me.status).toBe(200);
+    expect(me.body.role).toBe('master');
+  });
 });

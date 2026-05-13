@@ -13,7 +13,8 @@
     "test:coverage": "jest --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "promote-master": "node -r ts-node/register src/scripts/promote-master.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
