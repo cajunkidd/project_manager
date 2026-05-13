@@ -10,18 +10,22 @@ const NAV = [
   { to: '/timeline', label: 'Timeline' },
   { to: '/forms', label: 'Intake Forms' },
   { to: '/ai/tasks', label: 'AI Tasks' },
+  // Settings is visible to every authenticated user so they can manage their
+  // own integrations and so the workspace owner can claim the master role
+  // before any admin exists.
+  { to: '/settings', label: 'Settings' },
 ];
 
 const ADMIN_NAV = [
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
   { to: '/automations', label: 'Automations' },
-  { to: '/settings', label: 'Settings' },
 ];
 
 export function AppShell() {
   const { user, logout } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const isAdmin =
+    user?.role === 'master' || user?.role === 'admin' || user?.role === 'manager';
 
   return (
     <div className="app-shell">
