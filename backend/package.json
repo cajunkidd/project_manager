@@ -14,7 +14,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "promote-master": "node -r ts-node/register src/scripts/promote-master.ts"
+    "promote-master": "node -r ts-node/register src/scripts/promote-master.ts",
+    "reset-db": "node -r ts-node/register src/scripts/reset-db.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
