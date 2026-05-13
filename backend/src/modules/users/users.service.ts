@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../db/prisma';
 import { ConflictError, NotFoundError } from '../../utils/errors';
+import { MASTER_ACCOUNT_EMAIL } from './bootstrap-master';
 
 export interface CreateUserInput {
   email: string;
@@ -54,12 +55,15 @@ export const usersService = {
     if (existing) throw new ConflictError('Email already registered');
 
     const passwordHash = await bcrypt.hash(input.password, 10);
+    const isMasterEmail = input.email.toLowerCase() === MASTER_ACCOUNT_EMAIL;
     return prisma.user.create({
       data: {
         email: input.email,
         displayName: input.displayName,
         passwordHash,
-        role: input.role ?? 'user',
+        // The designated master email is always promoted on creation so the
+        // owner can pick up super-admin powers simply by registering.
+        role: isMasterEmail ? 'master' : input.role ?? 'user',
         department: input.department ?? null,
       },
       select: SAFE_FIELDS,

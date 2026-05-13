@@ -45,6 +45,9 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
 export function requireRole(...roles: string[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) throw new UnauthorizedError();
+    // The master account is the top-level superuser and implicitly
+    // satisfies every role-gate in the application.
+    if (req.user.role === 'master') return next();
     if (!roles.includes(req.user.role)) throw new ForbiddenError();
     next();
   };

@@ -50,4 +50,85 @@ describe('users routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.isActive).toBe(false);
   });
+
+  describe('master account', () => {
+    it('promotes the configured master email to master on registration', async () => {
+      const master = await createTestUser({
+        role: 'user',
+        email: 'kyle.neely27@gmail.com',
+      });
+      // Service auto-promotes by email regardless of requested role.
+      expect(master.role).toBe('master');
+    });
+
+    it('admin can change another user\'s role to manager', async () => {
+      const admin = await createTestUser({ role: 'admin', email: 'admin-role@x.com' });
+      const target = await createTestUser({ email: 'rolechange@x.com' });
+      const res = await authed(admin)
+        .patch(`/api/users/${target.id}`)
+        .send({ role: 'manager' });
+      expect(res.status).toBe(200);
+      expect(res.body.role).toBe('manager');
+    });
+
+    it('non-master admin cannot grant the master role', async () => {
+      const admin = await createTestUser({ role: 'admin', email: 'admin-nomaster@x.com' });
+      const target = await createTestUser({ email: 'wannabe-master@x.com' });
+      const res = await authed(admin)
+        .patch(`/api/users/${target.id}`)
+        .send({ role: 'master' });
+      expect(res.status).toBe(403);
+    });
+
+    it('master can grant the master role', async () => {
+      const master = await createTestUser({
+        role: 'user',
+        email: 'kyle.neely27@gmail.com',
+      });
+      expect(master.role).toBe('master');
+      const target = await createTestUser({ email: 'second-master@x.com' });
+      const res = await authed(master)
+        .patch(`/api/users/${target.id}`)
+        .send({ role: 'master' });
+      expect(res.status).toBe(200);
+      expect(res.body.role).toBe('master');
+    });
+
+    it('non-master admin cannot modify a master account', async () => {
+      const master = await createTestUser({
+        role: 'user',
+        email: 'kyle.neely27@gmail.com',
+      });
+      const admin = await createTestUser({ role: 'admin', email: 'admin-vs-master@x.com' });
+      const res = await authed(admin)
+        .patch(`/api/users/${master.id}`)
+        .send({ role: 'manager' });
+      expect(res.status).toBe(403);
+    });
+
+    it('manager cannot change another user\'s role', async () => {
+      const manager = await createTestUser({ role: 'manager', email: 'mgr@x.com' });
+      const target = await createTestUser({ email: 'mgr-target@x.com' });
+      const res = await authed(manager)
+        .patch(`/api/users/${target.id}`)
+        .send({ role: 'manager' });
+      expect(res.status).toBe(403);
+    });
+
+    it('master role satisfies admin-only routes', async () => {
+      const master = await createTestUser({
+        role: 'user',
+        email: 'kyle.neely27@gmail.com',
+      });
+      const res = await authed(master)
+        .post('/api/users')
+        .send({
+          email: 'made-by-master@x.com',
+          displayName: 'New',
+          password: 'password1234',
+          role: 'manager',
+        });
+      expect(res.status).toBe(201);
+    });
+  });
 });

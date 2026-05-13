@@ -7,9 +7,21 @@ import {
   type WebhookEvent,
   type WebhookSubscription,
 } from '../api/integrations';
+import { usersApi, type UserRole } from '../api/users';
+import { useAuth } from '../auth/AuthContext';
+import type { User } from '../types';
 import { formatDate } from '../utils/format';
 
-type Tab = 'tokens' | 'webhooks';
+type Tab = 'tokens' | 'webhooks' | 'users';
+
+const ALL_ROLES: UserRole[] = ['master', 'admin', 'manager', 'user', 'viewer'];
+const ROLE_LABELS: Record<UserRole, string> = {
+  master: 'Master',
+  admin: 'Admin',
+  manager: 'Manager',
+  user: 'User',
+  viewer: 'Viewer',
+};
 
 const SCOPES: ApiTokenScope[] = [
   'tasks:read',
@@ -30,6 +42,8 @@ const EVENTS: WebhookEvent[] = [
 ];
 
 export function SettingsPage() {
+  const { user } = useAuth();
+  const canManageUsers = user?.role === 'master' || user?.role === 'admin';
   const [tab, setTab] = useState<Tab>('tokens');
 
   return (
@@ -52,8 +66,167 @@ export function SettingsPage() {
         >
           Webhooks
         </button>
+        {canManageUsers ? (
+          <button
+            type="button"
+            className={`btn ${tab === 'users' ? '' : 'btn-secondary'}`}
+            onClick={() => setTab('users')}
+          >
+            Users
+          </button>
+        ) : null}
       </div>
-      {tab === 'tokens' ? <ApiTokensTab /> : <WebhooksTab />}
+      {tab === 'tokens' ? <ApiTokensTab /> : null}
+      {tab === 'webhooks' ? <WebhooksTab /> : null}
+      {tab === 'users' && canManageUsers ? <UsersTab /> : null}
+    </div>
+  );
+}
+
+function UsersTab() {
+  const { user: me } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  function reload() {
+    usersApi.list().then(setUsers).catch((err) => setError(err.message));
+  }
+
+  useEffect(() => {
+    reload();
+  }, []);
+
+  const iAmMaster = me?.role === 'master';
+
+  async function changeRole(target: User, role: UserRole) {
+    if (role === target.role) return;
+    if (
+      role === 'master' &&
+      !window.confirm(
+        `Grant the MASTER (super-admin) role to ${target.displayName}? They will have full control over the workspace.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(target.id);
+    setError(null);
+    try {
+      await usersApi.update(target.id, { role });
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update role');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function toggleActive(target: User) {
+    setBusyId(target.id);
+    setError(null);
+    try {
+      if (target.isActive) {
+        await usersApi.deactivate(target.id);
+      } else {
+        await usersApi.update(target.id, { isActive: true });
+      }
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function canEditRoleFor(target: User): boolean {
+    if (!me) return false;
+    if (target.id === me.id) return false; // never let someone demote themselves accidentally
+    if (target.role === 'master' && !iAmMaster) return false;
+    return iAmMaster || me.role === 'admin';
+  }
+
+  function availableRolesFor(target: User): UserRole[] {
+    // Master role can only be granted by another master.
+    return ALL_ROLES.filter((r) => r !== 'master' || iAmMaster || target.role === 'master');
+  }
+
+  return (
+    <div className="col">
+      <div className="card">
+        <h2 style={{ margin: '0 0 8px', fontSize: 16 }}>Users &amp; account types</h2>
+        <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+          Change account types for any user. The <strong>Master</strong> role is the
+          workspace owner — only a master can grant the master role to someone else.
+        </p>
+        {error ? <div className="error">{error}</div> : null}
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => {
+              const editable = canEditRoleFor(u);
+              const options = availableRolesFor(u);
+              return (
+                <tr key={u.id}>
+                  <td>
+                    <strong>{u.displayName}</strong>
+                    {u.id === me?.id ? (
+                      <span className="muted" style={{ marginLeft: 6, fontSize: 12 }}>
+                        (you)
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="muted">{u.email}</td>
+                  <td>
+                    {editable ? (
+                      <select
+                        value={u.role}
+                        disabled={busyId === u.id}
+                        onChange={(e) => changeRole(u, e.target.value as UserRole)}
+                      >
+                        {options.map((r) => (
+                          <option key={r} value={r}>
+                            {ROLE_LABELS[r]}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="badge">{ROLE_LABELS[u.role]}</span>
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className={`badge${u.isActive ? ' status-active' : ' status-cancelled'}`}
+                    >
+                      {u.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    {u.id !== me?.id && (iAmMaster || (me?.role === 'admin' && u.role !== 'master')) ? (
+                      <button
+                        type="button"
+                        className="link"
+                        style={{ color: u.isActive ? 'var(--danger)' : undefined }}
+                        disabled={busyId === u.id}
+                        onClick={() => toggleActive(u)}
+                      >
+                        {u.isActive ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                    ) : null}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

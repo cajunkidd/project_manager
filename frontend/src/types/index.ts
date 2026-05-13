@@ -20,7 +20,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
-  role: 'admin' | 'manager' | 'user' | 'viewer';
+  role: 'master' | 'admin' | 'manager' | 'user' | 'viewer';
   department: string | null;
   isActive: boolean;
 }

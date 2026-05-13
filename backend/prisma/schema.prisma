@@ -16,7 +16,7 @@ model User {
   email        String   @unique
   displayName  String
   passwordHash String
-  role         String   @default("user") // admin | manager | user | viewer
+  role         String   @default("user") // master | admin | manager | user | viewer
   department   String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
