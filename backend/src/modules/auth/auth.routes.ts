@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { prisma } from '../../db/prisma';
 import { authMiddleware, signToken } from '../../middleware/auth';
 import { asyncHandler } from '../../utils/asyncHandler';
-import { UnauthorizedError } from '../../utils/errors';
-import { promoteIfMasterEmail } from '../users/bootstrap-master';
+import { ForbiddenError, UnauthorizedError } from '../../utils/errors';
+import { MASTER_ACCOUNT_EMAIL, promoteIfMasterEmail } from '../users/bootstrap-master';
 import { usersService } from '../users/users.service';
 
 const registerSchema = z.object({
@@ -57,5 +58,46 @@ authRouter.get(
     const fresh = await usersService.getById(req.user!.id);
     const role = await promoteIfMasterEmail(fresh.id, fresh.email, fresh.role);
     res.json({ ...fresh, role });
+  }),
+);
+
+/**
+ * Claim the master (super-admin) role for the currently authenticated user.
+ *
+ * Allowed if either:
+ *   - the caller's email matches the configured MASTER_ACCOUNT_EMAIL
+ *     (case-insensitive), or
+ *   - no master account exists in the workspace yet (first-owner-wins
+ *     bootstrap — safe because once anyone claims it, this branch is closed).
+ *
+ * Returns a freshly signed token so the elevated role takes effect
+ * immediately without requiring the caller to log out and back in.
+ */
+authRouter.post(
+  '/claim-master',
+  authMiddleware,
+  asyncHandler(async (req, res) => {
+    const me = await usersService.getById(req.user!.id);
+    if (me.role === 'master') {
+      const token = signToken({ id: me.id, email: me.email, role: me.role });
+      res.json({ user: me, token });
+      return;
+    }
+
+    const emailMatches = me.email.toLowerCase() === MASTER_ACCOUNT_EMAIL;
+    const masterCount = await prisma.user.count({ where: { role: 'master' } });
+    if (!emailMatches && masterCount > 0) {
+      throw new ForbiddenError(
+        'A master account already exists. Ask the master to grant you the role.',
+      );
+    }
+
+    await prisma.user.update({
+      where: { id: me.id },
+      data: { role: 'master', isActive: true },
+    });
+    const updated = await usersService.getById(me.id);
+    const token = signToken({ id: updated.id, email: updated.email, role: updated.role });
+    res.json({ user: updated, token });
   }),
 );

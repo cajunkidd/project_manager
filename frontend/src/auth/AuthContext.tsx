@@ -10,6 +10,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (input: { email: string; password: string; displayName: string }) => Promise<void>;
   logout: () => void;
+  claimMaster: () => Promise<User>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -60,13 +61,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, loading, login, register, logout }), [
-    user,
-    loading,
-    login,
-    register,
-    logout,
-  ]);
+  const claimMaster = useCallback(async () => {
+    const res = await authApi.claimMaster();
+    setToken(res.token);
+    setUser(res.user);
+    return res.user;
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, loading, login, register, logout, claimMaster }),
+    [user, loading, login, register, logout, claimMaster],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

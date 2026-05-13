@@ -12,4 +12,5 @@ export const authApi = {
   register: (input: { email: string; password: string; displayName: string }) =>
     http.post<AuthResponse>('/auth/register', input),
   me: () => http.get<User>('/auth/me'),
+  claimMaster: () => http.post<AuthResponse>('/auth/claim-master', {}),
 };

@@ -51,6 +51,7 @@ export function SettingsPage() {
       <div className="page-header">
         <h1>Settings</h1>
       </div>
+      <ClaimMasterBanner />
       <div className="row" style={{ gap: 4 }}>
         <button
           type="button"
@@ -79,6 +80,43 @@ export function SettingsPage() {
       {tab === 'tokens' ? <ApiTokensTab /> : null}
       {tab === 'webhooks' ? <WebhooksTab /> : null}
       {tab === 'users' && canManageUsers ? <UsersTab /> : null}
+    </div>
+  );
+}
+
+function ClaimMasterBanner() {
+  const { user, claimMaster } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!user || user.role === 'master') return null;
+
+  async function onClaim() {
+    setBusy(true);
+    setError(null);
+    try {
+      await claimMaster();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to claim master account');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ borderColor: 'var(--primary)' }}>
+      <h2 style={{ margin: '0 0 4px', fontSize: 16 }}>Claim master account</h2>
+      <p className="muted" style={{ fontSize: 13, marginTop: 0 }}>
+        The master account is the workspace owner with full control over user
+        types and settings. Only the designated master email — or the first
+        user when no master exists yet — can claim it.
+      </p>
+      {error ? <div className="error">{error}</div> : null}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button type="button" className="btn" onClick={onClaim} disabled={busy}>
+          {busy ? 'Claiming…' : 'Make me the master'}
+        </button>
+      </div>
     </div>
   );
 }

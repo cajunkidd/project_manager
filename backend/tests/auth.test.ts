@@ -77,6 +77,71 @@ describe('auth', () => {
     expect(res.status).toBe(401);
   });
 
+  describe('POST /api/auth/claim-master', () => {
+    it('promotes the configured master email regardless of casing', async () => {
+      const { prisma } = await import('../src/db/prisma');
+      const bcrypt = await import('bcryptjs');
+      await prisma.user.create({
+        data: {
+          email: 'Kyle.Neely27@Gmail.com', // mixed case
+          displayName: 'Kyle',
+          passwordHash: await bcrypt.hash('password1234', 10),
+          role: 'user',
+        },
+      });
+      const login = await request(app).post('/api/auth/login').send({
+        email: 'Kyle.Neely27@Gmail.com',
+        password: 'password1234',
+      });
+      expect(login.status).toBe(200);
+      const claim = await request(app)
+        .post('/api/auth/claim-master')
+        .set('Authorization', `Bearer ${login.body.token}`)
+        .send({});
+      expect(claim.status).toBe(200);
+      expect(claim.body.user.role).toBe('master');
+      expect(claim.body.token).toEqual(expect.any(String));
+    });
+
+    it('lets the first user claim master when none exists yet', async () => {
+      const reg = await request(app).post('/api/auth/register').send({
+        email: 'first@example.com',
+        displayName: 'First',
+        password: 'password1234',
+      });
+      const claim = await request(app)
+        .post('/api/auth/claim-master')
+        .set('Authorization', `Bearer ${reg.body.token}`)
+        .send({});
+      expect(claim.status).toBe(200);
+      expect(claim.body.user.role).toBe('master');
+    });
+
+    it('refuses to claim if a master already exists and email does not match', async () => {
+      // Existing master in DB.
+      const { prisma } = await import('../src/db/prisma');
+      const bcrypt = await import('bcryptjs');
+      await prisma.user.create({
+        data: {
+          email: 'existing-master@example.com',
+          displayName: 'Master',
+          passwordHash: await bcrypt.hash('password1234', 10),
+          role: 'master',
+        },
+      });
+      const reg = await request(app).post('/api/auth/register').send({
+        email: 'stranger@example.com',
+        displayName: 'Stranger',
+        password: 'password1234',
+      });
+      const claim = await request(app)
+        .post('/api/auth/claim-master')
+        .set('Authorization', `Bearer ${reg.body.token}`)
+        .send({});
+      expect(claim.status).toBe(403);
+    });
+  });
+
   it('self-heals: existing master-email account is promoted on login', async () => {
     // Simulate a master-email account that pre-dates the master rollout by
     // poking the DB directly so the create-time auto-promotion is bypassed.
