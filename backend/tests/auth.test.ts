@@ -83,14 +83,14 @@ describe('auth', () => {
       const bcrypt = await import('bcryptjs');
       await prisma.user.create({
         data: {
-          email: 'Kyle.Neely27@Gmail.com', // mixed case
+          email: 'Kyle.Neely@Stine.Biz', // mixed case
           displayName: 'Kyle',
           passwordHash: await bcrypt.hash('password1234', 10),
           role: 'user',
         },
       });
       const login = await request(app).post('/api/auth/login').send({
-        email: 'Kyle.Neely27@Gmail.com',
+        email: 'Kyle.Neely@Stine.Biz',
         password: 'password1234',
       });
       expect(login.status).toBe(200);
@@ -149,7 +149,7 @@ describe('auth', () => {
     const bcrypt = await import('bcryptjs');
     await prisma.user.create({
       data: {
-        email: 'kyle.neely27@gmail.com',
+        email: 'kyle.neely@stine.biz',
         displayName: 'Kyle',
         passwordHash: await bcrypt.hash('password1234', 10),
         role: 'user',
@@ -157,7 +157,7 @@ describe('auth', () => {
     });
 
     const res = await request(app).post('/api/auth/login').send({
-      email: 'kyle.neely27@gmail.com',
+      email: 'kyle.neely@stine.biz',
       password: 'password1234',
     });
     expect(res.status).toBe(200);

@@ -9,7 +9,7 @@ import { prisma } from '../../db/prisma';
  * default workspace can use their own owner.
  */
 export const MASTER_ACCOUNT_EMAIL = (
-  process.env.MASTER_ACCOUNT_EMAIL ?? 'kyle.neely27@gmail.com'
+  process.env.MASTER_ACCOUNT_EMAIL ?? 'kyle.neely@stine.biz'
 ).toLowerCase();
 
 export async function ensureMasterAccount(): Promise<void> {

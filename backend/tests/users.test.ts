@@ -55,7 +55,7 @@ describe('users routes', () => {
     it('promotes the configured master email to master on registration', async () => {
       const master = await createTestUser({
         role: 'user',
-        email: 'kyle.neely27@gmail.com',
+        email: 'kyle.neely@stine.biz',
       });
       // Service auto-promotes by email regardless of requested role.
       expect(master.role).toBe('master');
@@ -83,7 +83,7 @@ describe('users routes', () => {
     it('master can grant the master role', async () => {
       const master = await createTestUser({
         role: 'user',
-        email: 'kyle.neely27@gmail.com',
+        email: 'kyle.neely@stine.biz',
       });
       expect(master.role).toBe('master');
       const target = await createTestUser({ email: 'second-master@x.com' });
@@ -97,7 +97,7 @@ describe('users routes', () => {
     it('non-master admin cannot modify a master account', async () => {
       const master = await createTestUser({
         role: 'user',
-        email: 'kyle.neely27@gmail.com',
+        email: 'kyle.neely@stine.biz',
       });
       const admin = await createTestUser({ role: 'admin', email: 'admin-vs-master@x.com' });
       const res = await authed(admin)
@@ -118,7 +118,7 @@ describe('users routes', () => {
     it('master role satisfies admin-only routes', async () => {
       const master = await createTestUser({
         role: 'user',
-        email: 'kyle.neely27@gmail.com',
+        email: 'kyle.neely@stine.biz',
       });
       const res = await authed(master)
         .post('/api/users')
