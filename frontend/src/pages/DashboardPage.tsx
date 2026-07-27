@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardApi, type UserDashboard } from '../api/dashboard';
+import { useAuth } from '../auth/AuthContext';
+import { AnimatedNumber } from '../components/AnimatedNumber';
 import { PriorityBadge } from '../components/PriorityBadge';
 import { StatusBadge } from '../components/StatusBadge';
 import type { Task } from '../types';
 import { formatDate, isOverdue } from '../utils/format';
 
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export function DashboardPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<UserDashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,26 +27,32 @@ export function DashboardPage() {
   if (error) return <div className="error">{error}</div>;
   if (!data) return <div className="muted">Loading…</div>;
 
+  const firstName = user?.displayName?.split(/\s+/)[0];
+
   return (
     <div className="col">
       <div className="page-header">
-        <h1>Dashboard</h1>
+        <h1>{firstName ? `${greeting()}, ${firstName}` : 'Dashboard'}</h1>
       </div>
 
       <div className="grid cols-3">
         <div className="stat">
           <div className="label">Open tasks</div>
-          <div className="value">{data.counts.open}</div>
+          <div className="value">
+            <AnimatedNumber value={data.counts.open} />
+          </div>
         </div>
         <div className="stat">
           <div className="label">Overdue</div>
-          <div className="value" style={{ color: data.counts.overdue > 0 ? '#b91c1c' : undefined }}>
-            {data.counts.overdue}
+          <div className={data.counts.overdue > 0 ? 'value danger' : 'value'}>
+            <AnimatedNumber value={data.counts.overdue} />
           </div>
         </div>
         <div className="stat">
           <div className="label">Due this week</div>
-          <div className="value">{data.counts.dueThisWeek}</div>
+          <div className="value">
+            <AnimatedNumber value={data.counts.dueThisWeek} />
+          </div>
         </div>
       </div>
 
