@@ -3,6 +3,9 @@ import { prisma } from '../src/db/prisma';
 beforeEach(async () => {
   await prisma.webhookDelivery.deleteMany();
   await prisma.webhookSubscription.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.contract.deleteMany();
+  await prisma.gLCode.deleteMany();
   await prisma.apiToken.deleteMany();
   await prisma.emailLog.deleteMany();
   await prisma.formSubmission.deleteMany();

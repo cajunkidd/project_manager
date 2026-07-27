@@ -160,3 +160,59 @@ export interface AutomationRule {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface GLCode {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { contracts: number; invoices: number };
+}
+
+export type ContractStatus = 'draft' | 'active' | 'expired' | 'terminated';
+
+export interface GLCodeRef {
+  id: string;
+  code: string;
+  name: string;
+  category: string | null;
+}
+
+export interface Contract {
+  id: string;
+  contractNumber: string;
+  title: string;
+  vendor: string | null;
+  amount: number | null;
+  status: ContractStatus;
+  startDate: string | null;
+  endDate: string | null;
+  glCodeId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  glCode?: GLCodeRef | null;
+  invoices?: { id: string; invoiceNumber: string; amount: number; status: string }[];
+  _count?: { invoices: number };
+}
+
+export type InvoiceStatus = 'pending' | 'approved' | 'paid' | 'void';
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  vendor: string | null;
+  amount: number;
+  status: InvoiceStatus;
+  issueDate: string | null;
+  dueDate: string | null;
+  glCodeId: string | null;
+  contractId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  glCode?: GLCodeRef | null;
+  contract?: { id: string; contractNumber: string; title: string } | null;
+}

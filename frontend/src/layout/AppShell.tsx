@@ -13,6 +13,9 @@ const NAV = [
 ];
 
 const ADMIN_NAV = [
+  { to: '/gl-codes', label: 'GL Codes' },
+  { to: '/contracts', label: 'Contracts' },
+  { to: '/invoices', label: 'Invoices' },
   { to: '/reports', label: 'Reports' },
   { to: '/workload', label: 'Workload' },
   { to: '/automations', label: 'Automations' },
