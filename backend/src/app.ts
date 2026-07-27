@@ -12,10 +12,13 @@ import {
   projectCommentsRouter,
   taskCommentsRouter,
 } from './modules/comments/comments.routes';
+import { contractsRouter } from './modules/contracts/contracts.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
 import { emailRouter } from './modules/email/email.routes';
 import { registerEmailListeners } from './modules/email/email.listeners';
 import { formsRouter } from './modules/forms/forms.routes';
+import { glCodesRouter } from './modules/gl-codes/gl-codes.routes';
+import { invoicesRouter } from './modules/invoices/invoices.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { registerNotificationListeners } from './modules/notifications/notifications.listeners';
 import { projectsRouter } from './modules/projects/projects.routes';
@@ -60,6 +63,9 @@ export function createApp() {
   app.use('/api/email', emailRouter);
   app.use('/api/api-tokens', apiTokensRouter);
   app.use('/api/webhooks', webhooksRouter);
+  app.use('/api/gl-codes', glCodesRouter);
+  app.use('/api/contracts', contractsRouter);
+  app.use('/api/invoices', invoicesRouter);
 
   // Public (token-authenticated) API
   app.use('/api/v1', publicApiRouter);

@@ -35,6 +35,9 @@ model User {
   automationRules   AutomationRule[] @relation("AutomationCreator")
   apiTokens         ApiToken[]
   webhooks          WebhookSubscription[]
+  createdGlCodes    GLCode[]         @relation("GLCodeCreator")
+  createdContracts  Contract[]       @relation("ContractCreator")
+  createdInvoices   Invoice[]        @relation("InvoiceCreator")
 }
 
 model Project {
@@ -273,4 +276,71 @@ model EmailLog {
   createdAt DateTime @default(now())
 
   @@index([direction])
+}
+
+// General Ledger (GL) account code. Uploaded in bulk from the company's
+// chart of accounts; contracts and invoices are associated to a GL code so
+// spend can be categorized against the ledger.
+model GLCode {
+  id          String   @id @default(uuid())
+  code        String   @unique // e.g. "6000-100"
+  name        String
+  description String?
+  category    String? // optional grouping, e.g. expense | revenue | asset | liability
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User?      @relation("GLCodeCreator", fields: [createdById], references: [id])
+  contracts Contract[]
+  invoices  Invoice[]
+
+  @@index([isActive])
+  @@index([category])
+}
+
+model Contract {
+  id             String    @id @default(uuid())
+  contractNumber String    @unique
+  title          String
+  vendor         String?
+  amount         Float?
+  status         String    @default("draft") // draft | active | expired | terminated
+  startDate      DateTime?
+  endDate        DateTime?
+  glCodeId       String?
+  createdById    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  glCode    GLCode?   @relation(fields: [glCodeId], references: [id])
+  createdBy User?     @relation("ContractCreator", fields: [createdById], references: [id])
+  invoices  Invoice[]
+
+  @@index([glCodeId])
+  @@index([status])
+}
+
+model Invoice {
+  id            String    @id @default(uuid())
+  invoiceNumber String    @unique
+  vendor        String?
+  amount        Float     @default(0)
+  status        String    @default("pending") // pending | approved | paid | void
+  issueDate     DateTime?
+  dueDate       DateTime?
+  glCodeId      String?
+  contractId    String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  glCode    GLCode?   @relation(fields: [glCodeId], references: [id])
+  contract  Contract? @relation(fields: [contractId], references: [id])
+  createdBy User?     @relation("InvoiceCreator", fields: [createdById], references: [id])
+
+  @@index([glCodeId])
+  @@index([contractId])
+  @@index([status])
 }

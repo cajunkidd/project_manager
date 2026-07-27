@@ -1,7 +1,7 @@
 import { prisma } from '../../db/prisma';
 
 export interface LogActivityInput {
-  entityType: 'project' | 'task' | 'comment';
+  entityType: 'project' | 'task' | 'comment' | 'gl_code' | 'contract' | 'invoice';
   entityId: string;
   action: string;
   oldValue?: unknown;

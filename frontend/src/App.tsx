@@ -5,10 +5,13 @@ import { NotificationsProvider } from './notifications/NotificationsContext';
 import { AITasksPage } from './pages/AITasksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { BoardPage } from './pages/BoardPage';
+import { ContractsPage } from './pages/ContractsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FormBuilderPage } from './pages/FormBuilderPage';
 import { FormsPage } from './pages/FormsPage';
 import { FormSubmitPage } from './pages/FormSubmitPage';
+import { GLCodesPage } from './pages/GLCodesPage';
+import { InvoicesPage } from './pages/InvoicesPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyTasksPage } from './pages/MyTasksPage';
 import { NotificationsPage } from './pages/NotificationsPage';
@@ -84,6 +87,30 @@ export function App() {
         />
         <Route path="timeline" element={<TimelinePage />} />
         <Route path="ai/tasks" element={<AITasksPage />} />
+        <Route
+          path="gl-codes"
+          element={
+            <RequireAdmin>
+              <GLCodesPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="contracts"
+          element={
+            <RequireAdmin>
+              <ContractsPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="invoices"
+          element={
+            <RequireAdmin>
+              <InvoicesPage />
+            </RequireAdmin>
+          }
+        />
         <Route
           path="reports"
           element={

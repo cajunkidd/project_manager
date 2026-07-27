@@ -78,8 +78,17 @@ npm run test:frontend   # frontend only (Vitest, jsdom)
   response body) for debugging. Admin Settings page provides token + webhook
   management with one-time secret reveal.
 
-The whole platform is implemented and tested — 156 tests across both
-workspaces (122 backend integration + 34 frontend unit).
+- **Finance — GL codes, contracts & invoices:** done. Bulk-upload the
+  company chart of accounts (`POST /api/gl-codes/upload`, accepting either a
+  JSON array or pasted CSV; existing codes are upserted by code), full GL
+  code CRUD, and Contract + Invoice records that associate to the applicable
+  GL code (validated + active-only on association). Admin/manager-gated write
+  access with read access for all authenticated users; filter contracts and
+  invoices by GL code. UI: GL Codes, Contracts, and Invoices pages with
+  upload, inline (re)association dropdowns, and status/GL filters.
+
+The whole platform is implemented and tested — 175 tests across both
+workspaces (141 backend integration + 34 frontend unit).
 
 The schema swaps to PostgreSQL by changing `provider` in
 `backend/prisma/schema.prisma` and updating `DATABASE_URL`.
