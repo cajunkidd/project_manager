@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Stine — Project Manager</title>
+    <meta name="theme-color" content="#070d09" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      document.documentElement.dataset.theme =
+        localStorage.getItem('pm-theme') === 'light' ? 'light' : 'dark';
+    </script>
   </head>
   <body>
     <div id="root"></div>
